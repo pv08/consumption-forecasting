@@ -1,6 +1,5 @@
 import os
-import numpy as np
-import torch
+import wwo_hist
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.regressors.linear_regression import ConsumptionLinearRegressor, ConsumptionMLPRegressor
@@ -13,6 +12,24 @@ from src.regressors.fcn_regressor import ConsumptionFCNRegressor
 from src.regressors.tcn_regressor import ConsumptionTCNRegressor
 from src.regressors.resnet_regressor import ConsumptionResNetRegressor
 from tqdm import tqdm
+
+
+def mk_weather_data(api, location, start, end, freq):
+    mkdir_if_not_exists("data/weather_data/")
+    os.chdir("data/weather_data/")
+
+    hist_weather_data = wwo_hist.retrieve_hist_data(
+        api_key=api,
+        location_list=location,
+        start_date=start,
+        end_date=end,
+        frequency=freq,
+        location_label=False,
+        export_csv=True,
+        store_df=False
+    )
+    os.chdir("../../")
+    return pd.read_csv(f'data/weather_data/{location[0]}.csv')
 
 def save_model_figures(model, results):
     mkdir_if_not_exists('etc/')

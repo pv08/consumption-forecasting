@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from src.utils.functions import mkdir_if_not_exists
+from src.utils.functions import mkdir_if_not_exists, mk_weather_data
 from tqdm import tqdm
 from src.utils.functions import create_sequences
 from pathlib import Path
@@ -14,6 +14,13 @@ class PecanParticipantPreProcessing:
         self.individual_id = individual_id
         self.root_path = root_path
         self.sequence_length = sequence_length
+
+        self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
+        self.locations = [
+            '162.89.0.47']  # list of strings containg US Zipcode, UK Postcode, Canada Postalcode, IP address, Latitude/Longitude (decimal degree) or city name
+        self.start = '01-01-2018'  # date when desired scraping period starts; preferred date format: 'dd-mmm-yyyy'
+        self.end = '31-12-2018'  # date when desired scraping period ends; preferred date format: 'dd-mmm-yyyy
+        self.freq = 1  # frequency between observations; possible values 1 (1 hour), 3 (3 hours), 6 (6 hours), 12 (12 hours (day/night)) or 24 (daily averages)weather_df = mk_weather_data()
 
         if Path(f"{self.root_path}/features/{self.individual_id}_features.csv").is_file():
             self.features_df = pd.read_csv(f"{self.root_path}/features/{self.individual_id}_features.csv")
@@ -78,9 +85,37 @@ class PecanParticipantPreProcessing:
     def get_test_data(self):
         return self.test_df
 
-    def pre_processing_data(self):
-        new_data = self.individual_data.copy()
+    def insert_weather_data(self, date, hour):
+        values = {}
+        loc = self.weather_df.loc[(self.weather_df['date'] == str(date)) & (self.weather_df['hour'] == f'{str(hour)}:00')]
+        for _, row in loc.iterrows():
+            for columns in loc.columns[2:-1]:
+                values[columns] = row[columns]
+        return values
 
+    def pre_processing_data(self):
+        if Path(f"data/weather_data/162.89.0.47.csv").is_file():
+            self.weather_df = pd.read_csv("data/weather_data/162.89.0.47.csv")
+        else:
+            self.weather_df = mk_weather_data(self.key, self.locations, self.start, self.end, self.freq)
+
+        self.weather_df['date'] = pd.to_datetime(self.weather_df['date_time'])
+        del self.weather_df['moonrise'], self.weather_df['moonset'], self.weather_df['sunrise'], self.weather_df['sunset']
+
+        weather = []
+        for _, row in tqdm(self.weather_df.iterrows(), total=self.weather_df.shape[0]):
+            values = {
+                'date': datetime.strftime(row.date, '%Y-%m-%d'),
+                'hour': datetime.strftime(row.date, '%H:%M')
+            }
+            for columns in self.weather_df.columns[1:-1]:
+                values[columns] = row[columns]
+            weather.append(values)
+
+        self.weather_df = pd.DataFrame(weather)
+
+        new_data = self.individual_data.copy()
+        new_data['crop_date'] = pd.to_datetime(new_data['localminute'])
         new_data['generation_solar1'] = np.where(new_data['solar'] < 0, 0, new_data['solar'])
         new_data['generation_solar2'] = np.where(new_data['solar2'] < 0, 0, new_data['solar2'])
 
@@ -94,13 +129,15 @@ class PecanParticipantPreProcessing:
         new_data["sum_generation"] = new_data[generation].sum(axis=1)
 
         compiled = pd.DataFrame({'date': new_data['localminute'], 'consumption': new_data['sum_consumption'],
-                                 'generation': new_data['sum_generation']})
+                                 'generation': new_data['sum_generation'], 'crop_date': new_data['crop_date']})
         df = compiled.copy()
         rows = []
 
         for _, row in tqdm(df.iterrows(), total=df.shape[0]):
             date_format = pd.Timestamp(row.date)
             row_data = dict(
+                date=datetime.strftime(row.crop_date, '%Y-%m-%d'),
+                hour=datetime.strftime(row.crop_date, '%H:%M'),
                 consumption=row.consumption,
                 generation=row.generation,
                 time_hour=date_format.hour,
@@ -110,6 +147,9 @@ class PecanParticipantPreProcessing:
                 day=date_format.day,
                 week_of_year=date_format.week
             )
+            weather_data = self.insert_weather_data(datetime.strftime(row.crop_date, '%Y-%m-%d'),
+                                               datetime.strftime(row.crop_date, '%H'))
+            row_data.update(weather_data)
             rows.append(row_data)
         self.features_df = pd.DataFrame(rows)
 
@@ -128,6 +168,7 @@ class PecanParticipantPreProcessing:
         print("[!] - Exporting trainable dataframe")
 
         mkdir_if_not_exists(f"{self.root_path}/features")
+        del self.features_df['date'], self.features_df['hour']
         self.features_df.to_csv(f"{self.root_path}/features/{self.individual_id}_features.csv")
 
 

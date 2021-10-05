@@ -11,10 +11,10 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='ResNet',
+    parser.add_argument('--model', type=str,  default='GRU',
                         help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST]')
 
-    parser.add_argument('--task', type=str, default='test',
+    parser.add_argument('--task', type=str, default='train',
                         help='Task of experiment, options: [train, predict, test]')
 
     parser.add_argument('--participant_id', type=str, default='test', help='Pecan Street participant id')
@@ -41,7 +41,7 @@ def main():
                         help='Number of workers to the Pytorch DataLoader.')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for Pytorch DataLoader.')
-    parser.add_argument('--n_epochs', type=int, default=500,
+    parser.add_argument('--n_epochs', type=int, default=164,
                         help='Number of epochs to train.')
     parser.add_argument('--early_stopping', type=bool, default=False,
                         help='Able early stopping.')
