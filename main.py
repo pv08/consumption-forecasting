@@ -14,10 +14,10 @@ def main():
     parser.add_argument('--model', type=str,  default='GRU',
                         help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST]')
 
-    parser.add_argument('--task', type=str, default='train',
+    parser.add_argument('--task', type=str, default='predict',
                         help='Task of experiment, options: [train, predict, test]')
 
-    parser.add_argument('--participant_id', type=str, default='test', help='Pecan Street participant id')
+    parser.add_argument('--participant_id', type=str, default='1642_test_2', help='Pecan Street participant id')
     parser.add_argument('--root_path', type=str, default='data/participants_data/1min/', help='root path of the data file')
 
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -41,7 +41,7 @@ def main():
                         help='Number of workers to the Pytorch DataLoader.')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for Pytorch DataLoader.')
-    parser.add_argument('--n_epochs', type=int, default=164,
+    parser.add_argument('--n_epochs', type=int, default=200,
                         help='Number of epochs to train.')
     parser.add_argument('--early_stopping', type=bool, default=False,
                         help='Able early stopping.')

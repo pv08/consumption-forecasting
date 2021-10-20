@@ -136,8 +136,8 @@ class PecanParticipantPreProcessing:
         for _, row in tqdm(df.iterrows(), total=df.shape[0]):
             date_format = pd.Timestamp(row.date)
             row_data = dict(
-                date=datetime.strftime(row.crop_date, '%Y-%m-%d'),
-                hour=datetime.strftime(row.crop_date, '%H:%M'),
+                # date=datetime.strftime(row.crop_date, '%Y-%m-%d'),
+                # hour=datetime.strftime(row.crop_date, '%H:%M'),
                 consumption=row.consumption,
                 generation=row.generation,
                 time_hour=date_format.hour,
@@ -147,9 +147,9 @@ class PecanParticipantPreProcessing:
                 day=date_format.day,
                 week_of_year=date_format.week
             )
-            weather_data = self.insert_weather_data(datetime.strftime(row.crop_date, '%Y-%m-%d'),
-                                               datetime.strftime(row.crop_date, '%H'))
-            row_data.update(weather_data)
+            # weather_data = self.insert_weather_data(datetime.strftime(row.crop_date, '%Y-%m-%d'),
+            #                                    datetime.strftime(row.crop_date, '%H'))
+            # row_data.update(weather_data)
             rows.append(row_data)
         self.features_df = pd.DataFrame(rows)
 
@@ -168,7 +168,7 @@ class PecanParticipantPreProcessing:
         print("[!] - Exporting trainable dataframe")
 
         mkdir_if_not_exists(f"{self.root_path}/features")
-        del self.features_df['date'], self.features_df['hour']
+        # del self.features_df['date'], self.features_df['hour']
         self.features_df.to_csv(f"{self.root_path}/features/{self.individual_id}_features.csv")
 
 
