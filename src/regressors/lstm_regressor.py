@@ -1,4 +1,3 @@
-import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim as optim
 from src.models.lstm import LSTMModel
@@ -17,7 +16,6 @@ class ConsumptionLSTMRegressor(BasicRegressor):
         self.model = LSTMModel(device, self.n_features, self.n_hidden, self.n_layers, self.dropout, activation_function,
                                bidirectional)
         self.criterion = nn.MSELoss()
-
 
     def forward(self, x, labels = None):
         output = self.model(x)

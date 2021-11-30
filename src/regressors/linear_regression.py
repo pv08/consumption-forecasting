@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.optim as optim
-import torch as T
 from src.models.linear import LinearModel, MLP
 from src.regressors.basic_regressor import BasicRegressor
 

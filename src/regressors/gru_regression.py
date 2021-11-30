@@ -1,6 +1,7 @@
-import pytorch_lightning as pl
 import torch.nn as nn
+import torch as T
 import torch.optim as optim
+import shap
 from src.models.gru import GRUModel
 from src.regressors.basic_regressor import BasicRegressor
 
@@ -23,3 +24,4 @@ class ConsumptionGRURegressor(BasicRegressor):
 
     def configure_optimizers(self):
         return optim.AdamW(self.parameters(), lr=self.lr)
+

@@ -1,13 +1,9 @@
+from itertools import accumulate
+
 import pytorch_lightning as pl
 import os
 import wandb
-from src.pecan_dataport.participant_preprocessing import PecanParticipantPreProcessing
-from src.dataset import PecanDataset, PecanDataModule
-from src.regressors.linear_regression import ConsumptionLinearRegressor
-from src.regressors.lstm_regressor import ConsumptionLSTMRegressor
-from src.regressors.gru_regression import ConsumptionGRURegressor
-from src.regressors.rnn_regressor import ConsumptionRNNRegressor
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, GradientAccumulationScheduler
 from pytorch_lightning.loggers import WandbLogger
 from src.pecan_wrapper.basic_wrapper import PecanWrapper
 from src.utils.functions import mkdir_if_not_exists, _regressor_trainer_class_dict
@@ -40,17 +36,19 @@ class PecanTrainer(PecanWrapper):
             save_top_k=1,
             verbose=True,
             monitor="val/loss_epoch",
-            mode='min'
+            mode='min',
+            save_weights_only = True
         )
         every_checkpoint_callback = ModelCheckpoint(
             dirpath=f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/',
             filename= str(self.args.model) + '-chpkt-pecanstreet-participant-id-'
                      + str(self.args.participant_id) + '-{epoch:03d}-{val_loss:.5f}',
             save_top_k=-1,
-            every_n_val_epochs=1,
+            every_n_epochs=1,
             verbose=True,
             monitor="val/loss_epoch",
             mode='min',
+            save_weights_only=True
         )
 
         self.callbacks.append(best_checkpoint_callback)
@@ -73,7 +71,6 @@ class PecanTrainer(PecanWrapper):
         logger.log_hyperparams(self.regressor.hparams)
 
         logger.watch(self.regressor, log='all')
-
         self.trainer = pl.Trainer(
             logger=logger,
             checkpoint_callback=True,
@@ -81,8 +78,11 @@ class PecanTrainer(PecanWrapper):
             max_epochs=self.args.n_epochs,
             gpus=1,
             progress_bar_refresh_rate=30,
-            resume_from_checkpoint=resume_ckpt
+            resume_from_checkpoint=resume_ckpt,
+            accumulate_grad_batches=1
         )
+
+#        self.regressor.set_gradiant_shap_baseline(self.gradient_baseline, self.gradient_baseline_test)
 
     def train(self):
 

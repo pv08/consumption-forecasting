@@ -1,19 +1,20 @@
 import pandas as pd
 import numpy as np
 
-from src.utils.functions import mkdir_if_not_exists, mk_weather_data
+from src.utils.functions import mkdir_if_not_exists, mk_weather_data, save_pca_features, create_sequences
 from tqdm import tqdm
-from src.utils.functions import create_sequences
+
 from pathlib import Path
 from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
-
+from sklearn.decomposition import PCA
 
 class PecanParticipantPreProcessing:
-    def __init__(self, individual_id, root_path, sequence_length = 120):
+    def __init__(self, individual_id, root_path, sequence_length = 120, shap_sequence = 30):
         self.individual_id = individual_id
         self.root_path = root_path
         self.sequence_length = sequence_length
+        self.shap_sequence = shap_sequence
 
         self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
         self.locations = [
@@ -30,6 +31,7 @@ class PecanParticipantPreProcessing:
             self.individual_data = self.individual_data.sort_values(by="localminute").reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
+        self.scaler = MinMaxScaler(feature_range=(-1, 1))
         self._get_split_data_normalized()
 
     def _get_split_data_normalized(self):
@@ -43,8 +45,14 @@ class PecanParticipantPreProcessing:
         print(f"[*] Validation dataframe shape: {self.val_df.shape}")
         print(f"[*] Test dataframe shape: {self.test_df.shape}")
 
-        self.scaler = MinMaxScaler(feature_range=(-1,1))
+
         self.scaler = self.scaler.fit(self.train_df)
+
+        self.total_df = pd.DataFrame(
+            self.scaler.transform(self.features_df),
+            index=self.features_df.index,
+            columns=self.features_df.columns
+        )
 
         self.train_df = pd.DataFrame(
             self.scaler.transform(self.train_df),
@@ -64,6 +72,9 @@ class PecanParticipantPreProcessing:
         )
 
 
+        self.shap_background_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
+        self.shap_test_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
+
         self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
         self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
         self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
@@ -73,17 +84,29 @@ class PecanParticipantPreProcessing:
         print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
         print(f"[!] Len of train, val and test sequence:", len(self.train_sequences), len(self.val_sequences), len(self.test_sequences))
 
+
+
     def get_sequences(self):
-        return self.train_sequences, self.test_sequences, self.val_sequences
+        return self.shap_background_sequence, self.shap_test_sequence, \
+               self.train_sequences, self.test_sequences, self.val_sequences
+
+    def get_standart_df_features(self):
+        return self.total_df
+
+    def get_features_names(self):
+        return self.train_sequences[0][0].columns
 
     def get_n_features(self):
-        return self.train_df.shape
+        return self.train_sequences[0][0].shape[1]
 
     def get_scaler(self):
         return self.scaler
 
     def get_test_data(self):
         return self.test_df
+
+    def get_features_df(self):
+        return self.features_df
 
     def insert_weather_data(self, date, hour):
         values = {}
@@ -131,46 +154,51 @@ class PecanParticipantPreProcessing:
         compiled = pd.DataFrame({'date': new_data['localminute'], 'consumption': new_data['sum_consumption'],
                                  'generation': new_data['sum_generation'], 'crop_date': new_data['crop_date']})
         df = compiled.copy()
+        df['prev_consumption'] = df.shift(1)['consumption']
+        df['consumption_change'] = df.apply(
+            lambda row: 0 if np.isnan(row.prev_consumption) else row.consumption - row.prev_consumption, axis=1
+        )
         rows = []
 
         for _, row in tqdm(df.iterrows(), total=df.shape[0]):
             date_format = pd.Timestamp(row.date)
             row_data = dict(
-                # date=datetime.strftime(row.crop_date, '%Y-%m-%d'),
-                # hour=datetime.strftime(row.crop_date, '%H:%M'),
-                consumption=row.consumption,
+                date=datetime.strftime(row.crop_date, '%Y-%m-%d'),
+                hour=datetime.strftime(row.crop_date, '%H:%M'),
                 generation=row.generation,
                 time_hour=date_format.hour,
                 time_minute=date_format.minute,
                 month=date_format.month,
                 day_of_week=date_format.dayofweek,
                 day=date_format.day,
-                week_of_year=date_format.week
+                week_of_year=date_format.week,
+                consumption_change=row.consumption_change,
+                consumption=row.consumption,
             )
-            # weather_data = self.insert_weather_data(datetime.strftime(row.crop_date, '%Y-%m-%d'),
-            #                                    datetime.strftime(row.crop_date, '%H'))
-            # row_data.update(weather_data)
+            weather_data = self.insert_weather_data(datetime.strftime(row.crop_date, '%Y-%m-%d'),
+                                               datetime.strftime(row.crop_date, '%H'))
+            row_data.update(weather_data)
             rows.append(row_data)
         self.features_df = pd.DataFrame(rows)
 
 
         date_time = pd.to_datetime(df.pop('date'), format='%Y.%m.%d %H:%M:%S', utc=True)
-        timestamp_s = date_time.map(datetime.timestamp)
-        day = 24 * (60 ** 2)
-        year = (365.2425) * day
 
-        self.features_df['day_sin'] = np.sin(timestamp_s * (2 * np.pi / day))
-        self.features_df['day_cos'] = np.cos(timestamp_s * (2 * np.pi / day))
-
-        self.features_df['year_sin'] = np.sin(timestamp_s * (2 * np.pi / year))
-        self.features_df['year_cos'] = np.cos(timestamp_s * (2 * np.pi / year))
+        # timestamp_s = date_time.map(datetime.timestamp)
+        # day = 24 * (60 ** 2)
+        # year = (365.2425) * day
+        #
+        # self.features_df['day_sin'] = np.sin(timestamp_s * (2 * np.pi / day))
+        # self.features_df['day_cos'] = np.cos(timestamp_s * (2 * np.pi / day))
+        #
+        # self.features_df['year_sin'] = np.sin(timestamp_s * (2 * np.pi / year))
+        # self.features_df['year_cos'] = np.cos(timestamp_s * (2 * np.pi / year))
         print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         print("[!] - Exporting trainable dataframe")
 
         mkdir_if_not_exists(f"{self.root_path}/features")
-        # del self.features_df['date'], self.features_df['hour']
-        self.features_df.to_csv(f"{self.root_path}/features/{self.individual_id}_features.csv")
-
+        del self.features_df['date'], self.features_df['hour']
+        self.features_df.to_csv(f"{self.root_path}/features/{self.individual_id}_features.csv", index=False)
 
 
 

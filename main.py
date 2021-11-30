@@ -11,13 +11,14 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='GRU',
+    parser.add_argument('--model', type=str,  default='LSTM',
                         help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST]')
 
-    parser.add_argument('--task', type=str, default='predict',
-                        help='Task of experiment, options: [train, predict, test]')
+    parser.add_argument('--task', type=str, default='train',
+                        help='Task of experiment, options: [train, predict, test, compare, feature_eval]')
 
-    parser.add_argument('--participant_id', type=str, default='1642_test_2', help='Pecan Street participant id')
+
+    parser.add_argument('--participant_id', type=str, default='661_test_30', help='Pecan Street participant id')
     parser.add_argument('--root_path', type=str, default='data/participants_data/1min/', help='root path of the data file')
 
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -37,8 +38,10 @@ def main():
                         help='Activation Functions. [sigmoid, gelu, relu]')
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='Learning rate.')
-    parser.add_argument('--num_workers', type=int, default=1,
+    parser.add_argument('--num_workers', type=int, default=6,
                         help='Number of workers to the Pytorch DataLoader.')
+    parser.add_argument('--pin_memory', type=bool, default=True,
+                        help='Pin Memory to the Pytorch DataLoader.')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for Pytorch DataLoader.')
     parser.add_argument('--n_epochs', type=int, default=200,
@@ -95,4 +98,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/

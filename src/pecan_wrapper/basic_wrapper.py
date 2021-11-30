@@ -9,26 +9,33 @@ class PecanWrapper:
         self.pecan_dataset = PecanParticipantPreProcessing(self.args.participant_id, self.args.root_path,
                                                            self.args.sequence_length)
 
-        self.train_sequences, self.test_sequences, self.val_sequences = self.pecan_dataset.get_sequences()
-        self.args.n_features = self.pecan_dataset.get_n_features()[1]
+        self.shap_back_sequence, self.shap_test_sequence, self.train_sequences, self.test_sequences, self.val_sequences = self.pecan_dataset.get_sequences()
+        self.args.n_features = self.pecan_dataset.get_n_features()
+        self.args.features_names = self.pecan_dataset.get_features_names()
 
         self.data_module = PecanDataModule(
-            self.args.device,
-            self.train_sequences,
-            self.test_sequences,
-            self.val_sequences,
-            self.args.batch_size,
-            self.args.num_workers
+            device=self.args.device,
+            shap_background_sequence=self.shap_back_sequence,
+            shap_test_sequence=self.shap_test_sequence,
+            train_sequences=self.train_sequences,
+            test_sequences=self.test_sequences,
+            val_sequences=self.val_sequences,
+            batch_size=self.args.batch_size,
+            num_workers=self.args.num_workers,
+            pin_memory=self.args.pin_memory
         )
         self.data_module.setup()
 
         print(f'[!] - Training shape:', end='\n')
-        train_dataset = PecanDataset(self.train_sequences, self.args.device)
-        for item in train_dataset:
+        self.train_dataset = PecanDataset(self.train_sequences, self.args.device)
+
+
+        for item in self.train_dataset:
             print(f"[*] - Sequence shape: {item['sequence'].shape}")
-            print(f"[*] - Lables shape: {item['label'].shape}")
+            print(f"[*] - Labels shape: {item['label'].shape}")
             print(item['label'])
             break
+
         mkdir_if_not_exists('checkpoints/')
         mkdir_if_not_exists('checkpoints/participants/')
         mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/')
