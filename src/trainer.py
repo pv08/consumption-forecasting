@@ -36,8 +36,7 @@ class PecanTrainer(PecanWrapper):
             save_top_k=1,
             verbose=True,
             monitor="val/loss_epoch",
-            mode='min',
-            save_weights_only = True
+            mode='min'
         )
         every_checkpoint_callback = ModelCheckpoint(
             dirpath=f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/',
@@ -47,8 +46,7 @@ class PecanTrainer(PecanWrapper):
             every_n_epochs=1,
             verbose=True,
             monitor="val/loss_epoch",
-            mode='min',
-            save_weights_only=True
+            mode='min'
         )
 
         self.callbacks.append(best_checkpoint_callback)
@@ -86,9 +84,4 @@ class PecanTrainer(PecanWrapper):
 
     def train(self):
 
-        for item in self.data_module.train_dataloader():
-            print(item['sequence'].shape)
-            print(item['label'].shape)
-            break
-
-        self.trainer.fit(self.regressor, self.data_module)
+        self.trainer.fit(self.regressor, self.data_module.train_dataloader(), self.data_module.val_dataloader())

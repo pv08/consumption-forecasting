@@ -1,6 +1,7 @@
 import torch as T
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
+from typing import  Optional
 
 
 class PecanDataset(Dataset):
@@ -14,18 +15,19 @@ class PecanDataset(Dataset):
 
     def __getitem__(self, idx):
         sequence, label = self.sequences[idx]
-        return dict(
-            sequence = T.Tensor(sequence.to_numpy()),
-            label = T.tensor(label).float()
-        )
+        try:
+            result = {
+                'sequence':T.Tensor(sequence.to_numpy()),
+                'label':T.tensor(label).float()
+            }
+        finally:
+            return result
 
 class PecanDataModule(pl.LightningDataModule):
-    def __init__(self, device, shap_background_sequence, shap_test_sequence, train_sequences, test_sequences,
+    def __init__(self, device, train_sequences, test_sequences,
                  val_sequences, background_shap_bs = 512, test_shap_bs = 128 ,batch_size = 8, num_workers = 6,
                  pin_memory = True):
         super(PecanDataModule, self).__init__()
-        self.shap_background_sequence = shap_background_sequence
-        self.shap_test_sequence = shap_test_sequence
 
         self.train_sequences = train_sequences
         self.test_sequences = test_sequences
@@ -40,10 +42,7 @@ class PecanDataModule(pl.LightningDataModule):
         self.device = device
 
 
-    def setup(self):
-        self.shap_background_sequence = PecanDataset(self.shap_background_sequence, self.device)
-        self.shap_test_sequence = PecanDataset(self.shap_test_sequence, self.device)
-
+    def setup(self, stage: Optional[str] = None):
         self.train_sequences = PecanDataset(self.train_sequences, self.device)
         self.test_sequences = PecanDataset(self.test_sequences, self.device)
         self.val_sequences = PecanDataset(self.val_sequences, self.device)

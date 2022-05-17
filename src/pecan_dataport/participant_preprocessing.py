@@ -72,9 +72,9 @@ class PecanParticipantPreProcessing:
         )
 
 
-        self.shap_background_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
-        self.shap_test_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
-
+        # self.shap_background_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
+        # self.shap_test_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
+        #
         self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
         self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
         self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
@@ -87,8 +87,7 @@ class PecanParticipantPreProcessing:
 
 
     def get_sequences(self):
-        return self.shap_background_sequence, self.shap_test_sequence, \
-               self.train_sequences, self.test_sequences, self.val_sequences
+        return self.train_sequences, self.test_sequences, self.val_sequences
 
     def get_standart_df_features(self):
         return self.total_df

@@ -2,10 +2,10 @@ import pytorch_lightning as pl
 import numpy as np
 import shap
 import torch as T
-from torchmetrics.regression.mean_squared_error import MeanSquaredError
-from torchmetrics.regression.mean_absolute_error import MeanAbsoluteError
-from torchmetrics.regression.r2score import R2Score
-from torchmetrics.regression.mean_absolute_percentage_error import MeanAbsolutePercentageError
+from torchmetrics.regression.mse import MeanSquaredError
+from torchmetrics.regression.mae import MeanAbsoluteError
+from torchmetrics.regression.r2 import R2Score
+from torchmetrics.regression.mape import MeanAbsolutePercentageError
 from sklearn.preprocessing import MinMaxScaler
 from captum.attr import LayerConductance, LayerActivation, LayerIntegratedGradients
 from captum.attr import IntegratedGradients, DeepLift, GradientShap, NoiseTunnel, FeatureAblation
