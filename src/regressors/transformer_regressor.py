@@ -12,7 +12,7 @@ class ConsumptionTransformerRegressor(BasicRegressor):
         self.model = TransformerModel(device=device, c_in=n_features, c_out=1, d_model=d_model,
                                       n_head=n_head, d_ffn=d_ffn, dropout=dropout, n_layers=n_layers,
                                       activation=activation_function)
-
+        self.save_hyperparameters()
         self.criterion = nn.MSELoss()
         self.lr = lr
 

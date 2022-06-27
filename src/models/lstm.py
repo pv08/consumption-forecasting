@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch as T
+
 class LSTMModel(nn.Module):
     def __init__(self, device, n_features, n_hidden = 128, n_layers = 2, dropout = 0.2, activation_function = 'relu',
                  bidirectional = False):

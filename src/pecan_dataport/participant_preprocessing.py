@@ -10,11 +10,13 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
 class PecanParticipantPreProcessing:
-    def __init__(self, individual_id, root_path, sequence_length = 120, shap_sequence = 30):
+    def __init__(self, individual_id, root_path, sequence_length = 120, shap_sequence = 30, task = 'train'):
         self.individual_id = individual_id
         self.root_path = root_path
         self.sequence_length = sequence_length
         self.shap_sequence = shap_sequence
+        self.task = task
+
 
         self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
         self.locations = [
@@ -75,28 +77,31 @@ class PecanParticipantPreProcessing:
         # self.shap_background_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
         # self.shap_test_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
         #
-        self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
-        self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
-        self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
 
-        print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
-        print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
-        print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
-        print(f"[!] Len of train, val and test sequence:", len(self.train_sequences), len(self.val_sequences), len(self.test_sequences))
+        if self.task == 'train':
+            self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
+            self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
+            self.test_sequences = None
+            print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
+            print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
 
-
+        elif self.task == 'test' or self.task == 'predict' or self.task == 'ensemble':
+            self.train_sequences = None
+            self.val_sequences = None
+            self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
+            print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
 
     def get_sequences(self):
         return self.train_sequences, self.test_sequences, self.val_sequences
 
-    def get_standart_df_features(self):
+    def get_standard_df_features(self):
         return self.total_df
 
     def get_features_names(self):
-        return self.train_sequences[0][0].columns
+        return self.features_df.columns
 
     def get_n_features(self):
-        return self.train_sequences[0][0].shape[1]
+        return self.features_df.shape[1]
 
     def get_scaler(self):
         return self.scaler

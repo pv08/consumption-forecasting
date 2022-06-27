@@ -1,47 +1,42 @@
-from itertools import accumulate
-
 import pytorch_lightning as pl
-import os
-import wandb
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, GradientAccumulationScheduler
 from pytorch_lightning.loggers import WandbLogger
 from src.pecan_wrapper.basic_wrapper import PecanWrapper
-from src.utils.functions import mkdir_if_not_exists, _regressor_trainer_class_dict
-
+from src.utils.functions import mkdir_if_not_exists, _regressor_trainer_class_dict, _get_resume_and_best_epoch
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 class PecanTrainer(PecanWrapper):
     def __init__(self, args):
         super(PecanTrainer, self).__init__(args)
+
+        mkdir_if_not_exists(f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best/')
+        mkdir_if_not_exists(f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/')
+
+
+        best_ckpt_location = f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best/'
+        best_ckpt_filename = f'best-{self.args.model}-chpkt-pecanstreet-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
+
+        every_ckpt_location = f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/'
+        every_ckpt_filename = f'{self.args.model}-chpkt-pecanstreet-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
+
+        master_logger_model = self.args.model
+        local_logger_dir = f'lib/log/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/'
+
         self.regressor = _regressor_trainer_class_dict(self.args)
 
-        list_epochs = next(os.walk(f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/'))[2]
-        if len(list_epochs) > 0:
-            last_epoch = list_epochs[len(list_epochs) - 1]
-            number_last_epoch = last_epoch[last_epoch.find("=") + 1: last_epoch.find("=") + 4]
-            print(f"[!] - Last Epoch - {number_last_epoch}")
-
-            resume_ckpt = f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/{last_epoch}'
-            logger_name = f"PL_{self.args.model}_{self.args.activation_fn}_{self.args.participant_id}_" \
-                          f"{self.args.n_epochs}_{self.args.lr}_resume_from_{number_last_epoch}"
-
-        else:
-            resume_ckpt = None
-            logger_name = f"PL_{self.args.model}_{self.args.activation_fn}_{self.args.participant_id}_" \
-                          f"{self.args.n_epochs}_{self.args.lr}"
 
         #TODO{Resolver o val_loss que está dando 0 no arquivo. não pode ser val/loss, pq cria uma pasta}
         best_checkpoint_callback = ModelCheckpoint(
-            dirpath=f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best',
-            filename=f'best-{self.args.model}-chpkt-pecanstreet-participant-id-{self.args.participant_id}' + "_{epoch:03d}-{val_loss:.5f}",
+            dirpath=best_ckpt_location,
+            filename=best_ckpt_filename,
             save_top_k=1,
             verbose=True,
             monitor="val/loss_epoch",
             mode='min'
         )
         every_checkpoint_callback = ModelCheckpoint(
-            dirpath=f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/',
-            filename= str(self.args.model) + '-chpkt-pecanstreet-participant-id-'
-                     + str(self.args.participant_id) + '-{epoch:03d}-{val_loss:.5f}',
+            dirpath=every_ckpt_location,
+            filename=every_ckpt_filename,
             save_top_k=-1,
             every_n_epochs=1,
             verbose=True,
@@ -57,31 +52,39 @@ class PecanTrainer(PecanWrapper):
             self.callbacks.append(EarlyStopping(monitor="val/loss_epoch",
                                            patience=self.args.patience))
 
+        if self.resume_ckpt is not None:
+            logger_name = f"TrainerPL_{master_logger_model}_{self.args.activation_fn}_{self.args.participant_id}_" \
+                          f"{self.args.n_epochs}_{self.args.lr}_resume_from_{self.number_last_epoch}"
 
-        logger = WandbLogger(project='pecanstreet',
-                             tags=f"{self.args.model}_regressor_trainer",
+        else:
+            logger_name = f"TrainerPL_{master_logger_model}_{self.args.activation_fn}_{self.args.participant_id}_" \
+                          f"{self.args.n_epochs}_{self.args.lr}"
+
+        self.logger_master = WandbLogger(project='pecanstreet',
+                             tags=[self.args.model, self.args.participant_id, self.args.activation_fn, "multi-step regressor", self.args.task],
                              offline=False,
                              name=logger_name,
                              config=self.args)
 
+        self.logger_slave = CSVLogger(local_logger_dir, name = logger_name)
 
 
-        logger.log_hyperparams(self.regressor.hparams)
 
-        logger.watch(self.regressor, log='all')
+        self.logger_master.log_hyperparams(self.regressor.hparams)
+        self.logger_master.watch(self.regressor, log='all')
+        self.logger_slave.log_hyperparams(self.regressor.hparams)
+
+
         self.trainer = pl.Trainer(
-            logger=logger,
-            checkpoint_callback=True,
+            logger=[self.logger_master, self.logger_slave],
+            enable_checkpointing=True,
             callbacks=self.callbacks,
             max_epochs=self.args.n_epochs,
             gpus=1,
-            progress_bar_refresh_rate=30,
-            resume_from_checkpoint=resume_ckpt,
+            progress_bar_refresh_rate=60,
+            resume_from_checkpoint=self.resume_ckpt,
             accumulate_grad_batches=1
         )
 
-#        self.regressor.set_gradiant_shap_baseline(self.gradient_baseline, self.gradient_baseline_test)
-
     def train(self):
-
         self.trainer.fit(self.regressor, self.data_module.train_dataloader(), self.data_module.val_dataloader())

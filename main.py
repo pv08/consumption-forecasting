@@ -1,5 +1,6 @@
 from src.trainer import PecanTrainer
 from src.evaluator import PecanEvaluator
+from src.ensemble import PecanEnsemble
 from src.utils.functions import replace_multiple_inputs_str
 import torch as T
 import argparse
@@ -11,14 +12,20 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='Transformer',
-                        help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST]')
+    parser.add_argument('--model', type=str,  default='GRU',
+                            help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
-    parser.add_argument('--task', type=str, default='train',
-                        help='Task of experiment, options: [train, predict, test, compare, feature_eval]')
+    parser.add_argument('--ensemble', type=bool,  default=True)
+    parser.add_argument('--ensemble_method', type=str, default='Fusion',
+                        help="options: [Fusion, Voting, Bagging, GradientBoosting, NTE, "
+                             "SE, AT, FGE, SGB]")
+    parser.add_argument('--ensemble_models', type=list,  default=['RNN', 'LSTM', 'GRU'])
+
+    parser.add_argument('--task', type=str, default='ensemble',
+                        help='Task of experiment, options: [train, predict, test, ensemble]')
 
 
-    parser.add_argument('--participant_id', type=str, default='661_test_30_all', help='Pecan Street participant id')
+    parser.add_argument('--participant_id', type=str, default='661_test_30_pca', help='Pecan Street participant id')
     parser.add_argument('--root_path', type=str, default='data/participants_data/1min/', help='root path of the data file')
 
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -78,7 +85,7 @@ def main():
     args.run_id = run_id[:len(run_id) - 7]
 
 
-
+    T.cuda.empty_cache()
     device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
     args.device = device
 
@@ -91,8 +98,12 @@ def main():
     elif args.task == 'predict':
         evaluator = PecanEvaluator(args)
         evaluator.predict()
+    elif args.task == 'ensemble':
+        ensemble = PecanEnsemble(args)
+        ensemble.ensemble()
+
     else:
-        raise NotImplemented
+        raise NotImplemented("[?] - Task not implemented. Try using train, test or predict")
 
 
 if __name__ == '__main__':

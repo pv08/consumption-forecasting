@@ -8,7 +8,7 @@ from src.regressors.basic_regressor import BasicRegressor
 class ConsumptionTCNRegressor(BasicRegressor):
     def __init__(self, device, n_features, lr, activation_function, scaler = None):
         super().__init__(scaler)
-
+        self.save_hyperparameters()
         self.model = TCNModel(device, n_features,
                               1)
         self.criterion = nn.MSELoss()

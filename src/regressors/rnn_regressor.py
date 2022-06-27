@@ -9,7 +9,7 @@ class ConsumptionRNNRegressor(BasicRegressor):
         self.model = RNNModel(device, n_features, n_hidden, n_layers, dropout, activation_function)
         self.criterion = nn.MSELoss()
         self.lr = lr
-
+        self.save_hyperparameters()
         self.n_features = n_features
         self.n_hidden = n_hidden
 

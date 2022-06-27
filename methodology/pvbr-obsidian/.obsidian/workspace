@@ -1,0 +1,102 @@
+{
+  "main": {
+    "id": "29ae4bf8a9c38ed5",
+    "type": "split",
+    "children": [
+      {
+        "id": "7dce97f0b6b28ca8",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "01. energy-consumption-possiblidades.md",
+            "mode": "source"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "35b5b282e836019c",
+    "type": "split",
+    "children": [
+      {
+        "id": "82037f3c07f370e7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9c591e570dba3704",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "0fcd70ace66338b9",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "e3c7a35d410c3212",
+    "type": "split",
+    "children": [
+      {
+        "id": "79b6d3ca2e94300a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ff423226b4cfca2b",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "01. energy-consumption-possiblidades.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "7dce97f0b6b28ca8",
+  "lastOpenFiles": [
+    "01. energy-consumption-possiblidades.md",
+    "02. energy-consumption-predictors.md",
+    "03. energy-consumption-applications.md",
+    "04. energy-consumption-methods-to-use.md",
+    "05. energy-consumption-problems.md",
+    "Bibliography.md",
+    "0.5. aplicabilidade-redes-neurais.md",
+    "0. start-point-redes-neurais-artificias.md",
+    "TODO.md",
+    "hadjout-2022.md"
+  ]
+}

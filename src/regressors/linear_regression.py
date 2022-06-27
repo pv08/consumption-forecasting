@@ -10,6 +10,7 @@ class ConsumptionLinearRegressor(BasicRegressor):
                                  n_hidden, activation_function)
         self.criterion = nn.MSELoss()
         self.lr = lr
+        self.save_hyperparameters()
 
     def forward(self, x, labels = None):
         output = self.model(x)

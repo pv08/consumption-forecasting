@@ -2,10 +2,23 @@ import pytorch_lightning as pl
 import numpy as np
 import shap
 import torch as T
-from torchmetrics.regression.mse import MeanSquaredError
-from torchmetrics.regression.mae import MeanAbsoluteError
-from torchmetrics.regression.r2 import R2Score
-from torchmetrics.regression.mape import MeanAbsolutePercentageError
+from torchmetrics import MetricCollection
+from torchmetrics import ExplainedVariance
+
+from torchmetrics import MeanAbsoluteError
+from torchmetrics import MeanAbsolutePercentageError
+from torchmetrics import WeightedMeanAbsolutePercentageError
+from torchmetrics import SymmetricMeanAbsolutePercentageError
+
+from torchmetrics import MeanSquaredError
+from torchmetrics import MeanSquaredLogError
+
+from torchmetrics import PearsonCorrCoef
+from torchmetrics import SpearmanCorrCoef
+
+from torchmetrics import R2Score
+from torchmetrics import TweedieDevianceScore
+
 from sklearn.preprocessing import MinMaxScaler
 from captum.attr import LayerConductance, LayerActivation, LayerIntegratedGradients
 from captum.attr import IntegratedGradients, DeepLift, GradientShap, NoiseTunnel, FeatureAblation
@@ -13,20 +26,24 @@ from captum.attr import IntegratedGradients, DeepLift, GradientShap, NoiseTunnel
 class BasicRegressor(pl.LightningModule):
     def __init__(self, scaler = None):
         super().__init__()
-        self.save_hyperparameters()
         self.scaler = scaler
-        self.val_mae = MeanAbsoluteError()
-        self.val_mape = MeanAbsolutePercentageError()
-        self.val_mse = MeanSquaredError()
-        self.val_rmse = MeanSquaredError(squared=False)
-        self.val_r2 = R2Score()
 
-        self.outputs = []
-        self.labels = []
+        self.predictions = []
+
+        self.explained_var = ExplainedVariance()
+        self.MAE = MeanAbsoluteError()
+        self.MAPE = MeanAbsolutePercentageError()
+        self.SMAPE = SymmetricMeanAbsolutePercentageError()
+        self.WMAPE = WeightedMeanAbsolutePercentageError()
+        self.MSE = MeanSquaredError()
+        self.RMSE = MeanSquaredError(squared=False)
+        self.MSLE = MeanSquaredLogError()
+        self.pearson_coef = PearsonCorrCoef()
+        self.tweedie_dev = TweedieDevianceScore()  # power 0 for normal distribution
+
 
     def log_descaled_values(self):
         return self.outputs, self.labels
-
 
     def forward(self, x, labels = None):
         raise NotImplemented
@@ -37,7 +54,6 @@ class BasicRegressor(pl.LightningModule):
 
         loss, outputs = self(sequences, labels)
         self.log("train/loss_epoch", loss, prog_bar=True, logger=True)
-        # self.log("train/r2_score", self.val_r2(outputs[:, 0], labels).item(), prog_bar=True, logger=True)
 
         return loss
 
@@ -48,13 +64,17 @@ class BasicRegressor(pl.LightningModule):
         labels = batch["label"]
 
         loss, outputs = self(sequences, labels)
+
+
         self.log("val/loss_epoch", loss, prog_bar=True, logger=True)
-        self.log("val/val_mae", self.val_mae(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/val_mse", self.val_mse(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/rmse", self.val_rmse(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/mape", self.val_mape(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("val/val_mae", self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("val/val_mse", self.MSE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("val/rmse", self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("val/mape", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
 
         return loss
+
+
 
     def test_step(self, batch, batch_idx):
         sequences = batch["sequence"]
@@ -62,32 +82,23 @@ class BasicRegressor(pl.LightningModule):
 
         loss, outputs = self(sequences, labels)
 
+        self.predictions.append(dict(
+            label=labels.item(),
+            model_output=outputs.item(),
+            loss=loss.item()
+        ))
 
+        self.log('test/MAE', self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/MAPE', self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/SMAPE', self.SMAPE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/WMAPE', self.WMAPE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/MSE', self.MSE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/RMSE', self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test/MSLE', self.MSLE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("test/test_loss", loss, prog_bar=True, logger=True)
-        self.log("test/val_mae", self.val_mae(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("test/val_mse", self.val_mse(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("test/rmse", self.val_rmse(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("test/mape", self.val_mape(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.test_sequences = sequences
 
         return loss
 
-    def on_test_end(self):
-
-        self.model.train()
-        self.test_sequences.requires_grad_()
-
-        ig = IntegratedGradients(self.model)
-        ig_attr, ig_delta = ig.attribute(self._interpretability_test, return_convergence_delta=True, n_steps=100)
-        self.ig_attr = ig_attr.detach().cpu().numpy()[-1, :, :]
-
-        gs = GradientShap(self.model)
-        gs_attr_test = gs.attribute(self.test_sequences, self.baseline)
-        self.gs_attr_test = gs_attr_test.detach().cpu().numpy()[-1, :, :]
-
-        dl = DeepLift(self.model)
-        dl_attr_test = dl.attribute(self.test_sequences)
-        self.dl_attr_test = dl_attr_test.detach().cpu().numpy()[-1, :, :]
 
     def get_feature_importance_index(self):
         return {"IntegratedGradients": self.ig_attr, 'GradientShap': self.gs_attr_test, 'DeepLift': self.dl_attr_test}

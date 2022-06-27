@@ -1,17 +1,24 @@
+import torch as T
 from src.pecan_dataport.participant_preprocessing import PecanParticipantPreProcessing
 from src.dataset import PecanDataset, PecanDataModule
-from src.utils.functions import mkdir_if_not_exists
+from src.utils.functions import _get_resume_and_best_epoch, mkdir_if_not_exists, _get_multiples_best_epochs
+
+import pytorch_lightning as pl
 
 class PecanWrapper:
     def __init__(self, args):
+        pl.seed_everything(0)
+
         self.args = args
         self.callbacks = []
+
         self.pecan_dataset = PecanParticipantPreProcessing(self.args.participant_id, self.args.root_path,
-                                                           self.args.sequence_length)
+                                                           self.args.sequence_length, task=self.args.task)
 
         self.train_sequences, self.test_sequences, self.val_sequences = self.pecan_dataset.get_sequences()
         self.args.n_features = self.pecan_dataset.get_n_features()
         self.args.features_names = self.pecan_dataset.get_features_names()
+        self.args.scaler = self.pecan_dataset.scaler
 
         self.data_module = PecanDataModule(
             device=self.args.device,
@@ -24,23 +31,32 @@ class PecanWrapper:
         )
         self.data_module.setup()
 
-        # print(f'[!] - Training shape:', end='\n')
-        # self.train_dataset = PecanDataset(self.train_sequences, self.args.device)
-        #
-        #
-        # for item in self.train_dataset:
-        #     print(f"[*] - Sequence shape: {item['sequence'].shape}")
-        #     print(f"[*] - Labels shape: {item['label'].shape}")
-        #     print(item['label'])
-        #     break
+        mkdir_if_not_exists('lib/')
+        mkdir_if_not_exists('lib/ckpts/')
+        mkdir_if_not_exists('lib/ckpts/participants/')
+        mkdir_if_not_exists(f'lib/ckpts/participants/{self.args.participant_id}/')
+        mkdir_if_not_exists(f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/')
+        mkdir_if_not_exists(f'lib/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/')
 
-        mkdir_if_not_exists('checkpoints/')
-        mkdir_if_not_exists('checkpoints/participants/')
-        mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/')
-        mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/')
-        mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/')
-        mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best/')
-        mkdir_if_not_exists(f'checkpoints/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/')
+        mkdir_if_not_exists('lib/log/')
+        mkdir_if_not_exists('lib/log/participants/')
+        mkdir_if_not_exists(f'lib/log/participants/{self.args.participant_id}/')
+        mkdir_if_not_exists(f'lib/log/participants/{self.args.participant_id}/{self.args.activation_fn}/')
+        mkdir_if_not_exists(f'lib/log/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/')
+
+        self.resume_ckpt, self.number_last_epoch = _get_resume_and_best_epoch(self.args.task, self.args.participant_id,
+                                                                             self.args.activation_fn, self.args.model)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

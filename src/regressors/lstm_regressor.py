@@ -4,8 +4,9 @@ from src.models.lstm import LSTMModel
 from src.regressors.basic_regressor import BasicRegressor
 
 class ConsumptionLSTMRegressor(BasicRegressor):
-    def __init__(self, device, n_features, lr, n_hidden, n_layers, dropout, activation_function, bidirectional, scaler = None):
+    def __init__(self, device, n_features, lr, n_hidden, n_layers, dropout, activation_function, bidirectional, scaler = None, **kwargs):
         super().__init__(scaler)
+        self.save_hyperparameters()
         self.n_features = n_features
         self.lr = lr
         self.n_hidden = n_hidden

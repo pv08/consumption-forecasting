@@ -1,0 +1,1 @@
+- Pesquisar fontes que demonstra que a granulidade de modelos por consumidores pode ajudar na previsão

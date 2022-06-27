@@ -8,7 +8,7 @@ from src.regressors.basic_regressor import BasicRegressor
 class ConsumptionConvRNNRegressor(BasicRegressor):
     def __init__(self, device, n_features, time_steps, lr, activation_function, scaler = None):
         super().__init__(scaler)
-
+        self.save_hyperparameters()
         self.model = ConvRNN(device, n_features,
                               time_steps)
         self.criterion = nn.MSELoss()

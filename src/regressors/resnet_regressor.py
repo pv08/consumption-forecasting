@@ -8,7 +8,7 @@ from src.regressors.basic_regressor import BasicRegressor
 class ConsumptionResNetRegressor(BasicRegressor):
     def __init__(self, device, n_features, lr, activation_function, scaler = None):
         super().__init__(scaler)
-
+        self.save_hyperparameters()
         self.model = ResNetModel(device, n_features, 1)
         self.criterion = nn.MSELoss()
         self.lr = lr

@@ -9,7 +9,7 @@ from src.regressors.basic_regressor import BasicRegressor
 class ConsumptionGRURegressor(BasicRegressor):
     def __init__(self, device, n_features, lr, n_hidden, n_layers, dropout, activation_function, scaler = None):
         super().__init__(scaler)
-
+        self.save_hyperparameters()
         self.model = GRUModel(device, n_features,
                               n_hidden, n_layers, dropout, activation_function)
         self.criterion = nn.MSELoss()
