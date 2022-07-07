@@ -4,7 +4,6 @@ import shap
 import torch as T
 from torchmetrics import MetricCollection
 from torchmetrics import ExplainedVariance
-
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanAbsolutePercentageError
 from torchmetrics import WeightedMeanAbsolutePercentageError
@@ -55,8 +54,7 @@ class BasicRegressor(pl.LightningModule):
         loss, outputs = self(sequences, labels)
         self.log("train/loss_epoch", loss, prog_bar=True, logger=True)
 
-        return loss
-
+        return loss, outputs
 
     def validation_step(self, batch, batch_idx):
 
@@ -72,7 +70,7 @@ class BasicRegressor(pl.LightningModule):
         self.log("val/rmse", self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("val/mape", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
 
-        return loss
+        return loss, outputs
 
 
 

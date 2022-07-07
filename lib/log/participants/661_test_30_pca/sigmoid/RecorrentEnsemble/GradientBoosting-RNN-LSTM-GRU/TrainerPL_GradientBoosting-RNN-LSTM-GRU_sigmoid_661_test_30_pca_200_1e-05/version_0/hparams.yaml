@@ -1,3 +1,0 @@
-ensemble_method: GradientBoosting
-lr: 1.0e-05
-scale: null

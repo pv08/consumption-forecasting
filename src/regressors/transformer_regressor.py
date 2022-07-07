@@ -31,7 +31,7 @@ class ConsumptionTransformerRegressor(BasicRegressor):
 
 class ConsumptionTSTRegressor(BasicRegressor):
     def __init__(self, device, n_features, seq_len, max_seq_len, d_model, n_head, d_k, d_v, d_ffn, res_dropout, n_layers,
-                 lr,  activation_function, fc_dropout, scaler = None):
+                 lr,  activation_function, fc_dropout, scaler = None) -> object:
         super(ConsumptionTSTRegressor, self).__init__(scaler)
         self.model = TSTModel(device=device, c_in=n_features, c_out=1, seq_len=seq_len, max_seq_len=max_seq_len,
                  n_layers=n_layers, d_model=d_model, n_heads=n_head, d_k=d_k, d_v=d_v,

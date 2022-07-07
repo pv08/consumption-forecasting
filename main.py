@@ -1,33 +1,35 @@
+import torch as T
+import argparse
+import datetime
 from src.trainer import PecanTrainer
 from src.evaluator import PecanEvaluator
 from src.ensemble import PecanEnsemble
 from src.utils.functions import replace_multiple_inputs_str
-import torch as T
-import argparse
-
-import datetime
 from collections import OrderedDict
 
 
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='GRU',
+    parser.add_argument('--model', type=str,  default='Transformer',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
-    parser.add_argument('--ensemble', type=bool,  default=True)
-    parser.add_argument('--ensemble_method', type=str, default='Fusion',
+    parser.add_argument('--ensemble', type=bool,  default=False)
+    parser.add_argument('--ensemble_method', type=str, default='DeepEnsemble',
                         help="options: [Fusion, Voting, Bagging, GradientBoosting, NTE, "
-                             "SE, AT, FGE, SGB]")
-    parser.add_argument('--ensemble_models', type=list,  default=['RNN', 'LSTM', 'GRU'])
+                             "SE, AT, FGE, SGB, DeepEnsemble]")
 
-    parser.add_argument('--task', type=str, default='ensemble',
+    parser.add_argument('--ensemble_models', type=list,  default=['LSTM', 'GRU'])
+
+    parser.add_argument('--task', type=str, default='test',
                         help='Task of experiment, options: [train, predict, test, ensemble]')
 
 
     parser.add_argument('--participant_id', type=str, default='661_test_30_pca', help='Pecan Street participant id')
     parser.add_argument('--root_path', type=str, default='data/participants_data/1min/', help='root path of the data file')
 
+    parser.add_argument('--seed', type=int, default=0,
+                        help='Seed used for deterministic results')
     parser.add_argument('--bidirectional', type=bool, default=False,
                         help='Flag to use GPU or not.')
     parser.add_argument('--use_gpu', type=bool, default=True,
@@ -94,10 +96,7 @@ def main():
         trainer.train()
     elif args.task == 'test':
         evaluator = PecanEvaluator(args)
-        evaluator.eval()
-    elif args.task == 'predict':
-        evaluator = PecanEvaluator(args)
-        evaluator.predict()
+        evaluator.evaluate()
     elif args.task == 'ensemble':
         ensemble = PecanEnsemble(args)
         ensemble.ensemble()

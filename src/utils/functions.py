@@ -1,3 +1,4 @@
+import torch as T
 import os
 import numpy as np
 import wwo_hist
@@ -5,16 +6,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import shap
 import json
-from src.regressors.linear_regression import ConsumptionLinearRegressor, ConsumptionMLPRegressor
-from src.regressors.lstm_regressor import ConsumptionLSTMRegressor
-from src.regressors.gru_regression import ConsumptionGRURegressor
-from src.regressors.rnn_regressor import ConsumptionRNNRegressor
-from src.regressors.conv_rnn_regressor import ConsumptionConvRNNRegressor
-from src.regressors.transformer_regressor import ConsumptionTransformerRegressor, ConsumptionTSTRegressor
-from src.regressors.fcn_regressor import ConsumptionFCNRegressor
-from src.regressors.tcn_regressor import ConsumptionTCNRegressor
-from src.regressors.resnet_regressor import ConsumptionResNetRegressor
-from src.regressors.recorrent_ensemble_regressor import RecorrentEnsembleRegressor
 from tqdm import tqdm
 
 
@@ -109,207 +100,19 @@ def save_model_figures(model, results, participant):
     plt.savefig(f'etc/imgs/predictions/{participant}_{model}_model.png', dpi=600, bbox_inches='tight')
 
 
-def _regressor_trainer_class_dict(args):
-    model = None
 
-    if args.model == "LSTM":
-        model = ConsumptionLSTMRegressor(device=args.device,
-                                         n_features=args.n_features,
-                                         lr=args.lr,
-                                         n_hidden=args.n_hidden,
-                                         n_layers=args.n_layers,
-                                         dropout=args.dropout,
-                                         activation_function=args.activation_fn,
-                                         bidirectional=args.bidirectional)
-    elif args.model == "RNN":
-        model = ConsumptionRNNRegressor(device=args.device,
-                                         n_features=args.n_features,
-                                         lr=args.lr,
-                                         n_hidden=args.n_hidden,
-                                         n_layers=args.n_layers,
-                                         dropout=args.dropout,
-                                         activation_function=args.activation_fn)
-    elif args.model == "GRU":
-        model = ConsumptionGRURegressor(device=args.device,
-                                       n_features=args.n_features,
-                                       lr=args.lr,
-                                       n_hidden=args.n_hidden,
-                                       n_layers=args.n_layers,
-                                       dropout=args.dropout,
-                                       activation_function=args.activation_fn)
-    elif args.model == "Linear":
-        model = ConsumptionLinearRegressor(device=args.device,
-                                           n_features=args.n_features,
-                                           lr=args.lr,
-                                           n_hidden=args.n_hidden,
-                                           activation_function=args.activation_fn)
-    elif args.model == "MLP":
-        model = ConsumptionMLPRegressor(device=args.device,
-                                           n_features=args.n_features,
-                                            sequence_length=args.sequence_length,
-                                           lr=args.lr)
-    elif args.model == "FCN":
-        model = ConsumptionFCNRegressor(device=args.device,
-                                           n_features=args.n_features,
-                                           lr=args.lr, activation_function=args.activation_fn)
-    elif args.model == "TCN":
-        model = ConsumptionTCNRegressor(device=args.device,
-                                           n_features=args.n_features,
-                                           lr=args.lr, activation_function=args.activation_fn)
-    elif args.model == "ResNet":
-        model = ConsumptionResNetRegressor(device=args.device,
-                                           n_features=args.n_features,
-                                           lr=args.lr, activation_function=args.activation_fn)
-    elif args.model == "ConvRNN":
-        model = ConsumptionConvRNNRegressor(device=args.device,
-                                            n_features=args.n_features,
-                                            time_steps=args.sequence_length,
-                                            lr=args.lr, activation_function=args.activation_fn)
-    elif args.model == "Transformer":
-        model = ConsumptionTransformerRegressor(device=args.device,
-                                                n_features=args.n_features,
-                                                d_model=args.d_model,
-                                                n_head=args.n_head,
-                                                d_ffn=args.d_ffn,
-                                                dropout=args.dropout,
-                                                n_layers=args.n_layers,
-                                                lr=args.lr,
-                                                activation_function=args.tst_activation_fn)
-    elif args.model == "TST":
-        model = ConsumptionTSTRegressor(device=args.device, n_features=args.n_features, seq_len=args.sequence_length,
-                                        max_seq_len=args.max_seq_len, d_model=args.d_model, n_head=args.n_head,
-                                        d_k=args.d_k, d_v=args.d_v, d_ffn=args.d_ffn, res_dropout=args.res_dropout,
-                                        n_layers=args.n_layers, lr=args.lr,  activation_function=args.tst_activation_fn,
-                                        fc_dropout=args.fc_dropout)
-    elif args.model == 'RecorrentEnsemble' and args.ensemble:
-        model = _regressor_ensemble_class_dict(args)
-    else:
-        raise NotImplementedError(f"[?] - Model not implemented yet")
-
-    return model
-
-def _regressor_eval_class_dict(args, ckpt, scaler):
-    model = None
-    if args.model == "LSTM":
-        model = ConsumptionLSTMRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                                strict=False,
-                                                                device=args.device,
-                                                                n_features=args.n_features,
-                                                                lr=args.lr,
-                                                                n_hidden=args.n_hidden,
-                                                                n_layers=args.n_layers,
-                                                                dropout=args.dropout,
-                                                                activation_function=args.activation_fn,
-                                                                bidirectional=args.bidirectional, scaler=scaler)
-    elif args.model == "RNN":
-        model = ConsumptionRNNRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                             scaler=scaler,
-                                                             device=args.device,
-                                                             n_features=args.n_features,
-                                                             lr=args.lr,
-                                                             n_hidden=args.n_hidden,
-                                                             n_layers=args.n_layers,
-                                                             dropout=args.dropout,
-                                                             activation_function=args.activation_fn)
-    elif args.model == "GRU":
-        model = ConsumptionGRURegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                            scaler=scaler,
-                                                            device=args.device,
-                                                            n_features=args.n_features,
-                                                            lr=args.lr,
-                                                            n_hidden=args.n_hidden,
-                                                            n_layers=args.n_layers,
-                                                            dropout=args.dropout,
-                                                            activation_function=args.activation_fn)
-    elif args.model == "Linear":
-        model = ConsumptionLinearRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                                  scaler=scaler,
-                                                                  device=args.device,
-                                                                  n_features=args.n_features,
-                                                                  lr=args.lr,
-                                                                  n_hidden=args.n_hidden,
-                                                                  activation_function=args.activation_fn)
-    elif args.model == "MLP":
-        model = ConsumptionMLPRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                            scaler=scaler,
-                                                            device=args.device,
-                                                            n_features=args.n_features,
-                                                            sequence_length=args.sequence_length,
-                                                            lr=args.lr)
-    elif args.model == "FCN":
-        model = ConsumptionFCNRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                            scaler=scaler,
-                                                            device=args.device,
-                                                            n_features=args.n_features,
-                                                            lr=args.lr,
-                                                            activation_function=args.activation_fn)
-    elif args.model == "TCN":
-        model = ConsumptionTCNRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                            scaler=scaler,
-                                                            device=args.device,
-                                                            n_features=args.n_features,
-                                                            lr=args.lr,
-                                                            activation_function=args.activation_fn)
-    elif args.model == "ResNet":
-        model = ConsumptionResNetRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                                  scaler=scaler,
-                                                                  device=args.device,
-                                                                  n_features=args.n_features,
-                                                                  lr=args.lr,
-                                                                 activation_function=args.activation_fn)
-    elif args.model == "ConvRNN":
-        model = ConsumptionConvRNNRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                                    scaler=scaler,
-                                                                    device=args.device,
-                                                                    n_features=args.n_features,
-                                                                    time_steps=args.sequence_length,
-                                                                    lr=args.lr,
-                                                                    activation_function=args.activation_fn)
-    elif args.model == "Transformer":
-        model = ConsumptionTransformerRegressor.load_from_checkpoint(checkpoint_path=ckpt,
-                                                                            scaler=scaler,
-                                                                            device=args.device,
-                                                                            n_features=args.n_features,
-                                                                            d_model=args.d_model,
-                                                                            n_head=args.n_head,
-                                                                            d_ffn=args.d_ffn,
-                                                                            dropout=args.dropout,
-                                                                            n_layers=args.n_layers,
-                                                                            lr=args.lr,
-                                                                            activation_function=args.tst_activation_fn)
-    elif args.model == "TST":
-        model = ConsumptionTSTRegressor.load_from_checkpoint(checkpoint_path=ckpt, scaler=scaler, device=args.device,
-                                                            n_features=args.n_features, seq_len=args.sequence_length,
-                                                            max_seq_len=args.max_seq_len, d_model=args.d_model,
-                                                            n_head=args.n_head,
-                                                            d_k=args.d_k, d_v=args.d_v, d_ffn=args.d_ffn,
-                                                            res_dropout=args.res_dropout,
-                                                            n_layers=args.n_layers, lr=args.lr,
-                                                            activation_function=args.tst_activation_fn,
-                                                            fc_dropout=args.fc_dropout)
-
-    else:
-        raise NotImplementedError(f"[?] - Model not implemented yet")
-    return model
 
 def _regressor_ensemble_class_dict(args):
     args.ensemble_dict_ckpt = dict(zip(args.ensemble_models, _get_multiples_best_epochs(args)))
+
     ensemble_models = []
     for model in args.ensemble_models:
         tmp_args = args
         tmp_args.model = model
         ensemble_models.append(_regressor_eval_class_dict(tmp_args, args.ensemble_dict_ckpt[model], args.scaler))
-    model = RecorrentEnsembleRegressor(ensemble_method=args.ensemble_method, lr=args.lr, ModelArray=ensemble_models)
+    model = RecorrentEnsembleRegressor(device=args.device, lr=args.lr, ModelArray=ensemble_models)
     return model
 
-def _get_multiples_best_epochs(args):
-    ckpt_list = []
-    try:
-        for ensemble_models in args.ensemble_models:
-            ckpt, _ = _get_resume_and_best_epoch('test', args.participant_id, args.activation_fn, ensemble_models)
-            ckpt_list.append(ckpt)
-    finally:
-        return ckpt_list
 
 
 def _get_resume_and_best_epoch(task, participant_id, activation_fn, model):
@@ -430,5 +233,4 @@ def write_test_json(result, model, task, participant_id):
         }
         write_json_file([result_value], f'etc/results/{participant_id}', 'result_report')
         print(f"[!] - Report of {model} model saved")
-
 

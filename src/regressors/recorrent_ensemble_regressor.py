@@ -1,39 +1,31 @@
+import torch as T
 import torch.nn as nn
 import torch.optim as optim
-from src.regressors.basic_regressor import BasicRegressor
 import torchensemble
+from src.regressors.basic_regressor import BasicRegressor
+from src.models.recorrent_ensemble import RecorrentEnsembleModel
+from src.optimizers.simulated_annealing import SimulatedAnnealinng, GaussianSampler
 
 
 class RecorrentEnsembleRegressor(BasicRegressor):
-    def __init__(self, ModelArray, lr, ensemble_method = 'Voting', scale = None):
+    def __init__(self, device, ModelArray, lr,  scale = None):
         super(RecorrentEnsembleRegressor, self).__init__(scale)
         self.save_hyperparameters(ignore=['ModelArray'])
-        ignore_classes = [type(regressor.model).__name__ for regressor in ModelArray]
-        model_list = [regressor.model for regressor in ModelArray]
-
-
-        # self.save_hyperparameters()
-        self.ensemble = nn.ModuleList(model_list)
+        ensemble = nn.ModuleList([regressor for regressor in ModelArray])
+        self.model = RecorrentEnsembleModel(device=device, ensemble_models=ensemble)
         self.criterion = nn.MSELoss()
-
-        self.model = self.get_ensemble_estimator(model_list[0], ensemble_method = ensemble_method)
-        self.model.estimators_ = self.ensemble
-        self.model.set_criterion(self.criterion)
-
-
         self.lr = lr
 
     def forward(self, x, labels = None):
-        output = self.model.forward(x)
+        output = self.model(x)
         loss = 0
         if labels is not None:
              loss = self.criterion(output, labels.unsqueeze(dim = 1))
-        return loss, output
+        return loss
 
     def configure_optimizers(self):
-        self.model.set_optimizer('AdamW', lr=self.lr, weight_decay=5e-4)
-
-        return optim.AdamW(self.parameters(), lr = self.lr)
+        sampler = GaussianSampler(mu=0, sigma=1)
+        return SimulatedAnnealinng(self.model.parameters(), sampler=sampler)
 
     def get_ensemble_estimator(self, estimator, n_estimator=10, use_cuda=True, ensemble_method='GradientBoosting'):
         ensemble = None

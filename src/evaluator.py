@@ -1,12 +1,25 @@
 import pytorch_lightning as pl
-import os
+from src.regressors.linear_regression import ConsumptionLinearRegressor, ConsumptionMLPRegressor
+from src.regressors.lstm_regressor import ConsumptionLSTMRegressor
+from src.regressors.gru_regression import ConsumptionGRURegressor
+from src.regressors.rnn_regressor import ConsumptionRNNRegressor
+from src.regressors.conv_rnn_regressor import ConsumptionConvRNNRegressor
+from src.regressors.transformer_regressor import ConsumptionTransformerRegressor, ConsumptionTSTRegressor
+from src.regressors.fcn_regressor import ConsumptionFCNRegressor
+from src.regressors.tcn_regressor import ConsumptionTCNRegressor
+from src.regressors.resnet_regressor import ConsumptionResNetRegressor
 from src.pecan_wrapper.basic_wrapper import PecanWrapper
-from src.utils.functions import _regressor_eval_class_dict, save_model_figures, mkdir_if_not_exists, write_test_json
+from src.utils.functions import mkdir_if_not_exists, write_test_json
 
 class PecanEvaluator(PecanWrapper):
     def __init__(self, args):
         super(PecanEvaluator, self).__init__(args)
-        self.regressor = _regressor_eval_class_dict(self.args, self.resume_ckpt, self.pecan_dataset.get_scaler())
+
+        self.resume_ckpt, self.number_last_epoch = self.get_best_epoch_trained(self.args.participant_id,
+                                                                               self.args.activation_fn, self.args.model)
+
+
+        self.regressor = self._get_trained_regressor_model(self.args, self.resume_ckpt, self.args.scaler)
 
         mkdir_if_not_exists('etc/')
         mkdir_if_not_exists('etc/imgs')
@@ -18,15 +31,10 @@ class PecanEvaluator(PecanWrapper):
         mkdir_if_not_exists(f'etc/imgs/features/{self.args.participant_id}/shap_values/force_plots')
         mkdir_if_not_exists(f'etc/imgs/features/{self.args.participant_id}/shap_values/force_plots/{self.args.model}')
 
-
-    def eval(self):
+    def evaluate(self):
         trainer = pl.Trainer(
-            enable_checkpointing=True,
-            callbacks=self.callbacks,
-            max_epochs=self.args.n_epochs,
             gpus=1,
-            progress_bar_refresh_rate=60,
-            resume_from_checkpoint=self.resume_ckpt
+            progress_bar_refresh_rate=60
         )
 
         result = trainer.test(self.regressor, self.data_module.test_dataloader())
@@ -36,20 +44,8 @@ class PecanEvaluator(PecanWrapper):
         return result
 
 
-    def predict(self):
-        trainer = pl.Trainer(
-            enable_checkpointing=True,
-            callbacks=self.callbacks,
-            max_epochs=self.args.n_epochs,
-            gpus=1,
-            progress_bar_refresh_rate=60,
-            resume_from_checkpoint=self.resume_ckpt
-        )
 
-        result = trainer.predict(self.regressor, self.data_module.test_dataloader())
-        write_test_json(result, self.args.model, self.args.task, self.args.participant_id)
-        save_model_figures(self.args.model, result, self.args.participant_id)
-        return result
+
 
     def get_len_test_df(self): #test
         return self.pecan_dataset.get_test_data()
