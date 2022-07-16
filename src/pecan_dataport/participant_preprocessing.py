@@ -48,7 +48,7 @@ class PecanParticipantPreProcessing:
         print(f"[*] Test dataframe shape: {self.test_df.shape}")
 
 
-        self.scaler = self.scaler.fit(self.train_df)
+        self.scaler = self.scaler.fit(self.features_df)
 
         self.total_df = pd.DataFrame(
             self.scaler.transform(self.features_df),
@@ -85,10 +85,11 @@ class PecanParticipantPreProcessing:
             print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
             print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
 
-        elif self.task == 'test' or self.task == 'predict' or self.task == 'ensemble':
+        elif self.task in ['test', 'predict', 'ensemble', 'validate']:
             self.train_sequences = None
-            self.val_sequences = None
+            self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
             self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
+            print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
             print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
 
     def get_sequences(self):

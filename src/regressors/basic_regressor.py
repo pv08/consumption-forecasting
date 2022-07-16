@@ -27,7 +27,8 @@ class BasicRegressor(pl.LightningModule):
         super().__init__()
         self.scaler = scaler
 
-        self.predictions = []
+        self.val_predictions = []
+        self.test_predictions = []
 
         self.explained_var = ExplainedVariance()
         self.MAE = MeanAbsoluteError()
@@ -54,25 +55,26 @@ class BasicRegressor(pl.LightningModule):
         loss, outputs = self(sequences, labels)
         self.log("train/loss_epoch", loss, prog_bar=True, logger=True)
 
-        return loss, outputs
+        return loss
 
     def validation_step(self, batch, batch_idx):
-
         sequences = batch["sequence"]
         labels = batch["label"]
-
         loss, outputs = self(sequences, labels)
-
-
         self.log("val/loss_epoch", loss, prog_bar=True, logger=True)
         self.log("val/val_mae", self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("val/val_mse", self.MSE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("val/rmse", self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("val/mape", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
 
-        return loss, outputs
+        self.val_predictions.append(dict(
+            label=labels.item(),
+            model_output=outputs.item(),
+            loss=loss.item()
+        ))
 
 
+        return loss
 
     def test_step(self, batch, batch_idx):
         sequences = batch["sequence"]
@@ -80,7 +82,7 @@ class BasicRegressor(pl.LightningModule):
 
         loss, outputs = self(sequences, labels)
 
-        self.predictions.append(dict(
+        self.test_predictions.append(dict(
             label=labels.item(),
             model_output=outputs.item(),
             loss=loss.item()

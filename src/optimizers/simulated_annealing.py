@@ -1,110 +1,150 @@
-import torch as T
-import torch.nn as nn
-import numpy as np
+from random import randint, random
 import math
-from torch.optim import Optimizer
+import numpy as np
+class SimulatedAnnealing:
+    def __init__(self, label, models_prediction, x0, opt_mode, cooling_schedule='linear',
+                 step_max=1000, t_min=0, t_max=100, bounds=[], alpha=None, damping=1):
+        assert opt_mode in ['combinatorial', 'continuous',
+                            'base'], 'opt_mode must be either "combinatorial" or "continuous"'
+        assert cooling_schedule in ['linear', 'exponential', 'logarithmic',
+                                    'quadratic'], 'cooling_schedule must be either in ["linear", "exponential", "logarithmic", "quadratic"]'
 
+        self.label = label
+        self.predictions = models_prediction
+        self.t = t_max
+        self.t_max = t_max
+        self.t_min = t_min
+        self.step_max = step_max
+        self.opt_mode = opt_mode
+        self.hist = []
+        self.cooling_schedule = cooling_schedule
 
-class UniformSampler(object):
-    def __init__(self, minval, maxval, dtype='float', cuda=True):
-        self.minval = minval
-        self.maxval = maxval
-        self.cuda = cuda
-        self.dtype_str = dtype
-        dtypes = {
-            'float': T.cuda.FloatTensor if cuda else T.FloatTensor,
-            'int': T.cuda.IntTensor if cuda else T.IntTensor,
-            'long': T.cuda.LongTensor if cuda else T.LongTensor
-        }
-        self.dtype = dtypes[dtype]
+        self.cost_func = self.EnsembleMSEFunc
+        self.x0 = x0
+        self.bounds = bounds[:]
+        self.damping = damping
+        self.current_state = self.x0
+        self.current_energy = self.EnsembleMSEFunc(self.x0, label, models_prediction)
+        self.best_state = self.current_state
+        self.best_energy = self.current_energy
 
-    def sample(self, size):
-        if self.dtype_str == 'float':
-            return self.dtype(*size).uniform_(self.minval, self.maxval)
-        elif self.dtype_str == 'int' or self.dtype_str == 'long':
-            return self.dtype(*size).random_(self.minval, self.maxval + 1)
-        else:
-            raise Exception('unknown dtype')
+        if self.opt_mode == 'combinatorial': self.get_neighbor = self.move_combinatorial
+        if self.opt_mode == 'continuous': self.get_neighbor = self.move_continuous
+        if self.opt_mode == 'base': self.get_neighbor = self.base_solution
 
+        if self.cooling_schedule == 'linear':
+            if alpha != None:
+                self.update_t = self.cooling_linear_m
+                self.cooling_schedule = 'linear multiplicative cooling'
+                self.alpha = alpha
+            if alpha == None:
+                self.update_t = self.cooling_linear_a
+                self.cooling_schedule = 'linear additive cooling'
 
-class GaussianSampler(object):
-    def __init__(self, mu, sigma, dtype='float', cuda=True):
-        self.mu = mu
-        self.sigma = sigma
-        self.cuda = cuda
-        self.dtype_str = dtype
-        dtypes = {
-            'float': T.cuda.FloatTensor if cuda else T.FloatTensor,
-            'int': T.cuda.IntTensor if cuda else T.IntTensor,
-            'long': T.cuda.LongTensor if cuda else T.LongTensor
-        }
-        self.dtype = dtypes[dtype]
+        if self.cooling_schedule == 'quadratic':
+            if alpha != None:
+                self.update_t = self.cooling_quadratic_m
+                self.cooling_schedule = 'quadratic multiplicative cooling'
+                self.alpha = alpha
+            if alpha == None:
+                self.update_t = self.cooling_quadratic_a
+                self.cooling_schedule = 'quadratic additive cooling'
 
-    def sample(self, size):
-        rand_float = T.cuda.FloatTensor if self.cuda else T.FloatTensor
-        rand_block = rand_float(*size).normal_(self.mu, self.sigma)
+        if self.cooling_schedule == 'exponential':
+            if alpha == None:
+                self.alpha = 0.8
+            else:
+                self.alpha = alpha
+            self.update_t = self.cooling_exponential
 
-        if self.dtype_str == 'int' or self.dtype_str == 'long':
-            rand_block = rand_block.type(self.dtype)
+        if self.cooling_schedule == 'logarithmic':
+            if alpha == None:
+                self.alpha = 0.8
+            else:
+                self.alpha = alpha
+            self.update_t = self.cooling_logarithmic
 
-        return rand_block
+        self.step, self.accept = 1, 0
+        while self.step < self.step_max and self.t >= self.t_min and self.t > 0:
+            proposed_neighbor = self.get_neighbor()
 
-class SimulatedAnnealinng(Optimizer):
-    def __init__(self, params, sampler, tau0=1.0,
-                 anneal_rate=0.0003, min_temp=1e-5,
-                 anneal_every=100000, hard=False, hard_rate=0.9):
-        defaults = dict(
-            sampler=sampler,
-            tau0=tau0,
-            tau=tau0,
-            anneal_rate=anneal_rate,
-            min_temp=min_temp,
-            anneal_every=anneal_every,
-            hard=hard, hard_rate=hard_rate,
-            iteration=0
-        )
-        super(SimulatedAnnealinng, self).__init__(params, defaults)
+            E_n = self.cost_func(proposed_neighbor, self.label, self.predictions)
+            dE = E_n - self.current_energy
 
-    @T.no_grad()
-    def step(self, closure=None):
-        loss = None
-        if closure is not None:
-            with T.enable_grad():
-                loss = closure()
+            if random() < self.safe_exp(-dE / self.t):
+                self.current_energy = E_n
+                self.current_state = proposed_neighbor[:]
+                self.accept += 1
 
-        for group in self.param_groups:
-            sampler = group['sampler']
+            if E_n < self.best_energy:
+                self.best_energy = E_n
+                self.best_state = proposed_neighbor[:]
+                self.best_ensemble_result = self.weight_avg
 
-            cloned_params = [p.clone() for p in group['params']]
+            self.hist.append([self.step, self.t, self.current_energy, self.best_energy])
 
-            for p in group['params']:
-                if group['iteration'] > 0 and group['iteration'] % group['anneal_every'] == 0:
-                    if not group['hard']:
-                        rate = -group['anneal_rate'] * group['iteration']
-                        group['tau'] = np.maximum(group['tau0'] * np.exp(rate), group['min_temp'])
-                    else:
-                        group['tau'] = np.maximum(group['hard_rate'] * group['tau'], group['min_temp'])
+            self.t = self.update_t(self.step)
+            self.step += 1
 
-                random_pertubation = group['sampler'].sample(p.data.size())
-                p.data = p.data / T.norm(p.data)
-                p.data.add_(random_pertubation)
-                group['iteration'] += 1
-            loss_perturbed = closure()
-            final_loss, is_swapped = self.anneal(loss, loss_perturbed, group['tau'])
-            if is_swapped:
-                for p, pbkp in zip(group['params'], cloned_params):
-                    p.data = pbkp.data
-            return final_loss
+        self.acceptance_rate = self.accept / self.step
 
-    def anneal(self, loss, loss_perturbed, tau):
-        def acceptance_prob(old, new, temp):
-            return T.exp((old - new)/temp)
+    def base_solution(self):
+        neighbor = self.current_state.copy()
+        p1, p2 = np.random.randint(0, len(self.current_state)), np.random.randint(0, len(self.current_state))
+        v = np.random.uniform(0, self.current_state[p2])
 
-        if loss_perturbed.data[0] < loss.data[0]:
-            return loss_perturbed, True
-        else:
-            ap = acceptance_prob(loss, loss_perturbed, tau)
-            print(f"[!] - old = {loss.data[0]}, pert = {loss_perturbed.data[0]}, ap = {ap.data[0]}, tau = {tau}")
-            if ap.data[0] > np.random.rand():
-                return loss_perturbed, True
-            return loss, False
+        neighbor[p1] = min(1, self.current_state[p1] + v)
+        neighbor[p2] = max(0, self.current_state[p2] - v)
+        return neighbor
+
+    def move_continuous(self):
+        neighbor = [item + ((np.random.uniform(0, 1) - 0.5) * self.damping) for item in self.current_state]
+
+        if self.bounds:
+            for i in range(len(neighbor)):
+                x_min, x_max = self.bounds[i]
+                neighbor[i] = min(max(neighbor[i], x_min), x_max)
+        return neighbor
+
+    def move_combinatorial(self):
+        p0 = randint(0, len(self.current_state) - 1)
+        p1 = randint(0, len(self.current_state) - 1)
+
+        neighbor = self.current_state[:]
+        neighbor[p0], neighbor[p1] = neighbor[p1], neighbor[p0]
+
+        return neighbor
+
+    def cooling_linear_m(self, step):
+        return self.t_max / (1 + self.alpha * step)
+
+    def cooling_linear_a(self, step):
+        return self.t_min + (self.t_max - self.t_min) * ((self.step_max - step) / self.step_max)
+
+    def cooling_quadratic_m(self, step):
+        return self.t_min / (1 + self.alpha * step ** 2)
+
+    def cooling_quadratic_a(self, step):
+        return self.t_min + (self.t_max - self.t_min) * ((self.t_max - step) / self.step_max) ** 2
+
+    def cooling_exponential_m(self, step):
+        return self.t_max * self.alpha ** step
+
+    def cooling_logarithmic_m(self, step):
+        return self.t_max / (self.alpha * math.log(step + 1))
+
+    def safe_exp(self, x):
+        try:
+            return math.exp(x)
+        except:
+            return 0
+
+    def EnsembleMSEFunc(self, weights, labels, models_predictions):
+        weight_sum = []
+
+        for prediction, weight in zip(models_predictions, weights):
+            weight_sum.append(prediction * weight)
+
+        self.weight_avg = np.sum(weight_sum, axis=0) / models_predictions.shape[0]
+
+        return MSEError(labels, self.weight_avg)

@@ -9,7 +9,7 @@ from src.regressors.fcn_regressor import ConsumptionFCNRegressor
 from src.regressors.tcn_regressor import ConsumptionTCNRegressor
 from src.regressors.resnet_regressor import ConsumptionResNetRegressor
 from src.pecan_wrapper.basic_wrapper import PecanWrapper
-from src.utils.functions import mkdir_if_not_exists, write_test_json
+from src.utils.functions import mkdir_if_not_exists, write_test_json, write_validation_json
 
 class PecanEvaluator(PecanWrapper):
     def __init__(self, args):
@@ -36,15 +36,16 @@ class PecanEvaluator(PecanWrapper):
             gpus=1,
             progress_bar_refresh_rate=60
         )
+        result = trainer.validate(self.regressor, self.data_module.val_dataloader())
+        write_validation_json(self.regressor.val_predictions, self.args.model, 'validate', self.args.participant_id)
 
         result = trainer.test(self.regressor, self.data_module.test_dataloader())
+
         write_test_json(result, self.args.model, self.args.task, self.args.participant_id)
-        write_test_json(self.regressor.predictions, self.args.model, 'predict', self.args.participant_id)
+        write_test_json(self.regressor.test_predictions, self.args.model, 'predict', self.args.participant_id)
+
 
         return result
-
-
-
 
 
     def get_len_test_df(self): #test

@@ -3,6 +3,7 @@ import argparse
 import datetime
 from src.trainer import PecanTrainer
 from src.evaluator import PecanEvaluator
+from src.validator import PecanValidator
 from src.ensemble import PecanEnsemble
 from src.utils.functions import replace_multiple_inputs_str
 from collections import OrderedDict
@@ -11,7 +12,7 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='Transformer',
+    parser.add_argument('--model', type=str,  default='LSTM',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
     parser.add_argument('--ensemble', type=bool,  default=False)
@@ -21,12 +22,13 @@ def main():
 
     parser.add_argument('--ensemble_models', type=list,  default=['LSTM', 'GRU'])
 
-    parser.add_argument('--task', type=str, default='test',
-                        help='Task of experiment, options: [train, predict, test, ensemble]')
+
+    parser.add_argument('--task', type=str, default='train',
+                        help='Task of experiment, options: [train, predict, test, ensemble, validate]')
 
 
-    parser.add_argument('--participant_id', type=str, default='661_test_30_pca', help='Pecan Street participant id')
-    parser.add_argument('--root_path', type=str, default='data/participants_data/1min/', help='root path of the data file')
+    parser.add_argument('--participant_id', type=str, default='661_test_30_LSTM_shap', help='Pecan Street participant id')
+    parser.add_argument('--root_path', type=str, default='data/participants_data/1min', help='root path of the data file')
 
     parser.add_argument('--seed', type=int, default=0,
                         help='Seed used for deterministic results')
@@ -97,6 +99,9 @@ def main():
     elif args.task == 'test':
         evaluator = PecanEvaluator(args)
         evaluator.evaluate()
+    elif args.task == 'validate':
+        evaluator = PecanValidator(args)
+        evaluator.validator()
     elif args.task == 'ensemble':
         ensemble = PecanEnsemble(args)
         ensemble.ensemble()

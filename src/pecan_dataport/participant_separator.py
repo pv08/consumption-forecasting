@@ -1,5 +1,6 @@
 import pandas as pd
 from src.utils.functions import get_files_inpath, mkdir_if_not_exists, verify_existence_data
+from tqdm import tqdm
 
 class DataportDataDivisor:
     def __init__(self, pecan_path, resolution):

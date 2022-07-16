@@ -59,13 +59,19 @@ class PecanWrapper:
         #                                                                      self.args.activation_fn, self.args.model)
 
     def train(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def evaluate(self):
-        raise NotImplemented
+        raise NotImplementedError
+
+    def validator(self):
+        raise NotImplementedError
 
     def ensemble(self):
-        raise NotImplemented
+        raise NotImplementedError
+
+    def reports(self):
+        raise NotImplementedError
 
     @staticmethod
     def _get_trained_regressor_model(args, ckpt, scaler):
