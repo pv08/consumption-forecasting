@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "01. energy-consumption-possiblidades.md",
+            "file": "05. energy-consumption-problems.md",
             "mode": "source",
             "source": false
           }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "01. energy-consumption-possiblidades.md",
+                "file": "05. energy-consumption-problems.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "7dce97f0b6b28ca8",
   "lastOpenFiles": [
-    "01. energy-consumption-possiblidades.md",
-    "02. energy-consumption-predictors.md",
-    "03. energy-consumption-applications.md",
     "04. energy-consumption-methods-to-use.md",
-    "05. energy-consumption-problems.md",
-    "Bibliography.md",
-    "0.5. aplicabilidade-redes-neurais.md",
+    "03. energy-consumption-applications.md",
+    "02. energy-consumption-predictors.md",
     "0. start-point-redes-neurais-artificias.md",
+    "santos-2020.md",
+    "tao-2022.md",
     "TODO.md",
-    "hadjout-2022.md"
+    "widrow_hoff-1960.md",
+    "zhang-2020.md",
+    "sepulveda-2021.md"
   ]
 }

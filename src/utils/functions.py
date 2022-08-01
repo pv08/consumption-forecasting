@@ -262,3 +262,12 @@ def write_test_json(result, model, task, participant_id):
         write_json_file([result_value], f'etc/results/test/{participant_id}', 'result_report')
         print(f"[!] - Report of {model} model saved")
 
+
+def MSEError(labels, predictions):
+    return np.sum(np.diff([labels, predictions], axis=0) ** 2) / len(predictions)
+
+
+def MAEError(labels, predictions):
+    return np.sum(abs(np.diff([labels, predictions], axis=0))) / len(predictions)
+
+

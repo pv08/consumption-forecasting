@@ -12,7 +12,7 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='LSTM',
+    parser.add_argument('--model', type=str,  default='Transformer',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
     parser.add_argument('--ensemble', type=bool,  default=False)
@@ -27,7 +27,7 @@ def main():
                         help='Task of experiment, options: [train, predict, test, ensemble, validate]')
 
 
-    parser.add_argument('--participant_id', type=str, default='661_test_30_LSTM_shap', help='Pecan Street participant id')
+    parser.add_argument('--participant_id', type=str, default='661_test_30_all', help='Pecan Street participant id')
     parser.add_argument('--root_path', type=str, default='data/participants_data/1min', help='root path of the data file')
 
     parser.add_argument('--seed', type=int, default=0,
