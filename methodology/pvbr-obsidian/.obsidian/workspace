@@ -4,12 +4,12 @@
     "type": "split",
     "children": [
       {
-        "id": "7dce97f0b6b28ca8",
+        "id": "e09f30232ab59936",
         "type": "leaf",
         "state": {
           "type": "markdown",
           "state": {
-            "file": "05. energy-consumption-problems.md",
+            "file": "0.0.1. backpropagation.md",
             "mode": "source",
             "source": false
           }
@@ -53,7 +53,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 423.5
   },
   "right": {
     "id": "e3c7a35d410c3212",
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "05. energy-consumption-problems.md",
+                "file": "0.0.1. backpropagation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -87,17 +87,17 @@
     "width": 300,
     "collapsed": true
   },
-  "active": "7dce97f0b6b28ca8",
+  "active": "e09f30232ab59936",
   "lastOpenFiles": [
-    "04. energy-consumption-methods-to-use.md",
-    "03. energy-consumption-applications.md",
-    "02. energy-consumption-predictors.md",
-    "0. start-point-redes-neurais-artificias.md",
-    "santos-2020.md",
-    "tao-2022.md",
+    "0. brief-history-of-ann.md",
+    "0.0.1. backpropagation.md",
+    "0.5. aplicabilidade-redes-neurais.md",
+    "0.1 recorrent-neural-networks.md",
+    "vaswani-2017.md",
+    "werbos-1974.md",
     "TODO.md",
-    "widrow_hoff-1960.md",
-    "zhang-2020.md",
-    "sepulveda-2021.md"
+    "deep-learning-ebook-DAS.md",
+    "Bibliography.md",
+    "06. energy-consumption-avanços.md"
   ]
 }

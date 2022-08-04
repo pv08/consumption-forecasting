@@ -1,0 +1,3 @@
+@INBOOK{6302929,  author={Rumelhart, David E. and McClelland, James L.},  booktitle={Parallel Distributed Processing: Explorations in the Microstructure of Cognition: Foundations},   title={Learning Internal Representations by Error Propagation},   year={1987},  volume={},  number={},  pages={318-362},  abstract={This chapter contains sections titled: The Problem, The Generalized Delta Rule, Simulation Results, Some Further Generalizations, Conclusion},  keywords={},  doi={},  ISSN={},  publisher={MIT Press},  isbn={},  url={https://ieeexplore.ieee.org/document/6302929},}
+
+[[Bibliography]]

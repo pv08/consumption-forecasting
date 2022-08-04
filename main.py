@@ -12,7 +12,7 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-    parser.add_argument('--model', type=str,  default='Transformer',
+    parser.add_argument('--model', type=str,  default='FCN',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
     parser.add_argument('--ensemble', type=bool,  default=False)
