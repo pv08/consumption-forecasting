@@ -90,8 +90,8 @@ def main():
 
 
     T.cuda.empty_cache()
-    device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
-    args.device = device
+
+    args.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
 
     if args.task == 'train':
         trainer = PecanTrainer(args)

@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "05. energy-consumption-problems.md",
+            "file": "0.7.3. Ensemble.md",
             "mode": "source",
             "source": false
           }
@@ -40,7 +40,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "perdas",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "05. energy-consumption-problems.md",
+                "file": "0.7.3. Ensemble.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "e09f30232ab59936",
   "lastOpenFiles": [
+    "0.7.2. Etapa de pós-treinamento.md",
+    "Bibliography.md",
+    "0.7.1. Etapa de pré-processamento.md",
+    "he-2020.md",
+    "0.7. Metodologia.md",
+    "dryar-1944.md",
+    "06. energy-consumption-avanços.md",
+    "05. energy-consumption-problems.md",
     "04. energy-consumption-methods-to-use.md",
-    "02. energy-consumption-predictors.md",
-    "01. energy-consumption-possiblidades.md",
-    "0. brief-history-of-ann.md",
-    "0.0.1. backpropagation.md",
-    "0.1 recorrent-neural-networks.md",
-    "0.1.1. Vanillas RNN.md",
-    "0.1.2. LSTM.md",
-    "0.1.3. GRU.md",
-    "0.2. PCA.md"
+    "03. energy-consumption-applications.md"
   ]
 }
