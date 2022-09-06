@@ -8,16 +8,13 @@ from pathlib import Path
 from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
+from src.pecan_wrapper.basic_dataset import BasicDataset
 
-class PecanParticipantPreProcessing:
-    def __init__(self, individual_id, root_path, sequence_length = 120, shap_sequence = 30, task = 'train'):
-        self.individual_id = individual_id
-        self.root_path = root_path
-        self.sequence_length = sequence_length
-        self.shap_sequence = shap_sequence
+class PecanParticipantPreProcessing(BasicDataset):
+    def __init__(self, root_path, id, sequence_length = 120, shap_sequence = 30,
+                 target_column = 'consumption', task = 'train', resolution = '1min', type='test_30_all_features'):
+        super(PecanParticipantPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution)
         self.task = task
-
-
         self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
         self.locations = [
             '162.89.0.47']  # list of strings containg US Zipcode, UK Postcode, Canada Postalcode, IP address, Latitude/Longitude (decimal degree) or city name
@@ -25,19 +22,21 @@ class PecanParticipantPreProcessing:
         self.end = '31-12-2018'  # date when desired scraping period ends; preferred date format: 'dd-mmm-yyyy
         self.freq = 1  # frequency between observations; possible values 1 (1 hour), 3 (3 hours), 6 (6 hours), 12 (12 hours (day/night)) or 24 (daily averages)weather_df = mk_weather_data()
 
-        if Path(f"{self.root_path}/features/{self.individual_id}_features.csv").is_file():
-            self.features_df = pd.read_csv(f"{self.root_path}/features/{self.individual_id}_features.csv")
+
+        if Path(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.id}_{type}.csv").is_file():
+            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.id}_{type}.csv")
             print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         else:
-            self.individual_data = pd.read_csv(f'{self.root_path}/{self.individual_id}.csv')
+            self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/{resolution}/{self.id}.csv')
             self.individual_data = self.individual_data.sort_values(by="localminute").reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
-        self.scaler = MinMaxScaler(feature_range=(-1, 1))
-        self._get_split_data_normalized()
+        self.preProcessData()
 
-    def _get_split_data_normalized(self):
+    def preProcessData(self):
         n = len(self.features_df)
+
+        self.n_features = len(self.features_df.columns.to_list())
 
         self.train_df = self.features_df[0: int(n * .7)]
         self.val_df = self.features_df[int(n * .7): int(n * (1.1 - .2))]
@@ -122,8 +121,8 @@ class PecanParticipantPreProcessing:
         return values
 
     def pre_processing_data(self):
-        if Path(f"data/weather_data/162.89.0.47.csv").is_file():
-            self.weather_df = pd.read_csv("data/weather_data/162.89.0.47.csv")
+        if Path(f"{self.root_path}/Pecanstreet/weather_data/162.89.0.47.csv").is_file():
+            self.weather_df = pd.read_csv(f"{self.root_path}/weather_data/162.89.0.47.csv")
         else:
             self.weather_df = mk_weather_data(self.key, self.locations, self.start, self.end, self.freq)
 
@@ -201,9 +200,10 @@ class PecanParticipantPreProcessing:
         print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         print("[!] - Exporting trainable dataframe")
 
-        mkdir_if_not_exists(f"{self.root_path}/features")
+        mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}")
+        mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}/features")
         del self.features_df['date'], self.features_df['hour']
-        self.features_df.to_csv(f"{self.root_path}/features/{self.individual_id}_features.csv", index=False)
+        self.features_df.to_csv(f"{self.root_path}//Pecanstreet/participants_data/{self.resolution}features/{self.id}_features.csv", index=False)
 
 
 

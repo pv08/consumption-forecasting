@@ -1,5 +1,6 @@
 import os
 from src.pecan_dataport.participant_preprocessing import PecanParticipantPreProcessing
+from src.hue_dataset.hue_preprocessing import HUEPreProcessing
 from src.dataset import PecanDataModule
 from src.utils.functions import mkdir_if_not_exists
 from src.regressors.linear_regression import ConsumptionLinearRegressor, ConsumptionMLPRegressor
@@ -16,18 +17,26 @@ import pytorch_lightning as pl
 
 class PecanWrapper:
     def __init__(self, args):
-        pl.seed_everything(args.seed)
-
         self.args = args
+        pl.seed_everything(args.seed)
+        self.mkDefaultDirs()
+
+
         self.callbacks = []
+        assert self.args.dataset in ['Pecanstreet', 'HUE'], "[?] - Dataset option not recognized. Select Pecanstreet or HUE"
+        if self.args.dataset == 'Pecanstreet':
+            self.dataset =  PecanParticipantPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
+                                                          sequence_length=self.args.sequence_length, task='train',
+                                                          resolution=self.args.resolution, type=self.args.data_type)
+        elif self.args.dataset == 'HUE':
+            self.dataset = HUEPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
+                                            debug=self.args.debug, debug_percent=self.args.debug_percent,
+                                            sequence_length=self.args.sequence_length)
 
-        self.pecan_dataset = PecanParticipantPreProcessing(self.args.participant_id, self.args.root_path,
-                                                           self.args.sequence_length, task=self.args.task)
+        self.train_sequences, self.test_sequences, self.val_sequences = self.dataset.train_sequences, self.dataset.test_sequences, self.dataset.val_sequences
+        self.args.n_features = self.dataset.n_features
 
-        self.train_sequences, self.test_sequences, self.val_sequences = self.pecan_dataset.get_sequences()
-        self.args.n_features = self.pecan_dataset.get_n_features()
-
-        self.args.scaler = self.pecan_dataset.scaler
+        self.args.scaler = self.dataset.scaler
 
         self.data_module = PecanDataModule(
             device=self.args.device,
@@ -40,23 +49,59 @@ class PecanWrapper:
         )
         self.data_module.setup()
 
-        # Create checkpoints folders for training
+    def mkDefaultDirs(self):
+        self.task = 'single-step' if self.args.output_length == 1 else 'multi-step'
+        #Create etc folder for directory componentes
         mkdir_if_not_exists('etc/')
+        # Create checkpoints folders for training
         mkdir_if_not_exists('etc/ckpts/')
         mkdir_if_not_exists('etc/ckpts/participants/')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.participant_id}/')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/epochs')
+        self.every_ckpt_location = f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/epochs'
+        self.every_ckpt_filename = f'{self.task}-{self.args.model}-ckpt-{self.args.dataset}-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
 
-        # Create log folders for training
+        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/best')
+        self.best_ckpt_location = f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/best'
+        self.best_ckpt_filename = f'best-{self.task}-{self.args.model}-ckpt-{self.args.dataset}-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
+
+        #Create log folder for training
         mkdir_if_not_exists('etc/log/')
         mkdir_if_not_exists('etc/log/participants/')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.participant_id}/')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.participant_id}/{self.args.activation_fn}/')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/')
+        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/')
+        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
+        self.local_logger_dir = f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
 
-        # self.resume_ckpt, self.number_last_epoch = _get_resume_and_best_epoch(self.args.task, self.args.participant_id,
-        #                                                                      self.args.activation_fn, self.args.model)
+        #Create results folders
+        mkdir_if_not_exists('etc/results/')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
+        self.local_result_dir = f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
+
+
+        #Create img folders for validation
+        mkdir_if_not_exists('etc/imgs/')
+        mkdir_if_not_exists('etc/imgs/participants')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/losses')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/forecasting')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/metrics')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/PCA')
+        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/feature_importance')
 
     def train(self):
         raise NotImplementedError
@@ -273,18 +318,17 @@ class PecanWrapper:
 
 
     @staticmethod
-    def get_last_epoch_trained(participant, activation_fn, model):
+    def get_epoch_trained(path):
         resume_ckpt = None
         number_last_epoch = None
         try:
-            list_epochs = next(os.walk(
-                f'etc/ckpts/participants/{participant}/{activation_fn}/{model}/epochs/'))[2]
+            list_epochs = next(os.walk(path))[2]
         finally:
             if len(list_epochs) > 0:
                 last_epoch = list_epochs[len(list_epochs) - 1]
                 number_last_epoch = last_epoch[last_epoch.find("=") + 1: last_epoch.find("=") + 4]
                 print(f"[!] - Last Epoch loaded - {number_last_epoch}")
-                resume_ckpt = f'etc/ckpts/participants/{participant}/{activation_fn}/{model}/epochs/{last_epoch}'
+                resume_ckpt = f'{path}/{last_epoch}'
         return resume_ckpt, number_last_epoch
 
     @staticmethod

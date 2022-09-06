@@ -206,61 +206,31 @@ def read_json_file(filepath, filename):
         json_file.close()
     return data
 
-def write_validation_json(result, model, task, participant_id):
-    mkdir_if_not_exists('etc')
-    mkdir_if_not_exists('etc/results')
-    mkdir_if_not_exists(f'etc/results/validation/')
-    mkdir_if_not_exists(f'etc/results/validation/{participant_id}')
+
+def write_test_json(path, result, model, task):
+    mkdir_if_not_exists(f'{path}/{task}')
 
     try:
-        with open(f'etc/results/validation/{participant_id}/result_report.json') as json_file:
+        with open(f'{path}/{task}/result_report.json') as json_file:
             data = json.load(json_file)
             json_file.close()
 
         for model_dict in data:
             if model_dict['model'] == model:
                 model_dict[task] = result
-                write_json_file(data, f'etc/results/validation/{participant_id}', 'result_report')
+                write_json_file(data, f'{path}/{task}', 'result_report')
                 return None
         data.append({'model': model, task: result})
-        write_json_file(data, f'etc/results/validation/{participant_id}', 'result_report')
-        print(f"[!] - Report of {model} model saved")
+        write_json_file(data, f'{path}/{task}', 'result_report')
+        print(f"[!] - {task.capitalize()} report of {model} model saved")
         return None
     except:
         result_value = {
             'model': model,
             task: result
         }
-        write_json_file([result_value], f'etc/results/validation/{participant_id}', 'result_report')
-        print(f"[!] - Report of {model} model saved")
-
-def write_test_json(result, model, task, participant_id):
-    mkdir_if_not_exists('etc')
-    mkdir_if_not_exists('etc/results')
-    mkdir_if_not_exists(f'etc/results/test/')
-    mkdir_if_not_exists(f'etc/results/test/{participant_id}')
-
-    try:
-        with open(f'etc/results/test/{participant_id}/result_report.json') as json_file:
-            data = json.load(json_file)
-            json_file.close()
-
-        for model_dict in data:
-            if model_dict['model'] == model:
-                model_dict[task] = result
-                write_json_file(data, f'etc/results/test/{participant_id}', 'result_report')
-                return None
-        data.append({'model': model, task: result})
-        write_json_file(data, f'etc/results/test/{participant_id}', 'result_report')
-        print(f"[!] - Report of {model} model saved")
-        return None
-    except:
-        result_value = {
-            'model': model,
-            task: result
-        }
-        write_json_file([result_value], f'etc/results/test/{participant_id}', 'result_report')
-        print(f"[!] - Report of {model} model saved")
+        write_json_file([result_value], f'{path}/{task}', 'result_report')
+        print(f"[!] - {task.capitalize()} report of {model} model saved")
 
 
 def MSEError(labels, predictions):

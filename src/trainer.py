@@ -8,21 +8,9 @@ class PecanTrainer(PecanWrapper):
     def __init__(self, args):
         super(PecanTrainer, self).__init__(args)
 
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best/')
-        self.best_ckpt_location = f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/best/'
-        self.best_ckpt_filename = f'best-{self.args.model}-chpkt-pecanstreet-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
-
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/')
-        self.every_ckpt_location = f'etc/ckpts/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/epochs/'
-        self.every_ckpt_filename = f'{self.args.model}-chpkt-pecanstreet-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
-
-
-        self.resume_ckpt, self.number_last_epoch = self.get_last_epoch_trained(self.args.participant_id,
-                                                                               self.args.activation_fn, self.args.model)
+        self.resume_ckpt, self.number_last_epoch = self.get_epoch_trained(self.every_ckpt_location)
 
         self.master_logger_model = self.args.model
-        self.local_logger_dir = f'etc/log/participants/{self.args.participant_id}/{self.args.activation_fn}/{self.args.model}/'
-
         self.regressor = self._get_regressor_model_(self.args)
 
 
@@ -34,7 +22,7 @@ class PecanTrainer(PecanWrapper):
             filename=self.best_ckpt_filename,
             save_top_k=1,
             verbose=True,
-            monitor="val/loss_epoch",
+            monitor="val|MSE",
             mode='min'
         )
         every_checkpoint_callback = ModelCheckpoint(
@@ -43,7 +31,7 @@ class PecanTrainer(PecanWrapper):
             save_top_k=-1,
             every_n_epochs=1,
             verbose=True,
-            monitor="val/loss_epoch",
+            monitor="val|MSE",
             mode='min'
         )
 
@@ -52,19 +40,19 @@ class PecanTrainer(PecanWrapper):
 
 
         if self.args.early_stopping:
-            self.callbacks.append(EarlyStopping(monitor="val/loss_epoch",
+            self.callbacks.append(EarlyStopping(monitor="val|MSE",
                                            patience=self.args.patience))
 
         if self.resume_ckpt is not None:
-            logger_name = f"TrainerPL_{self.master_logger_model}_{self.args.activation_fn}_{self.args.participant_id}_" \
-                          f"{self.args.n_epochs}_{self.args.lr}_resume_from_{self.number_last_epoch}"
+            logger_name = f"{self.master_logger_model}_{self.task}_{self.args.dataset}_{self.args.resolution}_{self.args.participant_id}_" \
+                          f"{self.args.n_epochs}_resume_from_{self.number_last_epoch}"
 
         else:
-            logger_name = f"TrainerPL_{self.master_logger_model}_{self.args.activation_fn}_{self.args.participant_id}_" \
-                          f"{self.args.n_epochs}_{self.args.lr}"
+            logger_name = f"{self.master_logger_model}_{self.task}_{self.args.dataset}_{self.args.resolution}_{self.args.participant_id}_" \
+                          f"{self.args.n_epochs}"
 
-        self.logger_master = WandbLogger(project='pecanstreet',
-                             tags=[self.args.model, self.args.participant_id, self.args.activation_fn, "multi-step regressor", self.args.task],
+        self.logger_master = WandbLogger(project='EnergyConsumption',
+                             tags=[self.args.dataset, self.task, self.args.model, self.args.participant_id, self.args.resolution],
                              offline=False,
                              name=logger_name,
                              config=self.args)

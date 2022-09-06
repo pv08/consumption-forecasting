@@ -1,26 +1,10 @@
 import pytorch_lightning as pl
 import numpy as np
-import shap
 import torch as T
-from torchmetrics import MetricCollection
 from torchmetrics import ExplainedVariance
 from torchmetrics import MeanAbsoluteError
 from torchmetrics import MeanAbsolutePercentageError
-from torchmetrics import WeightedMeanAbsolutePercentageError
-from torchmetrics import SymmetricMeanAbsolutePercentageError
-
-from torchmetrics import MeanSquaredError
-from torchmetrics import MeanSquaredLogError
-
-from torchmetrics import PearsonCorrCoef
-from torchmetrics import SpearmanCorrCoef
-
-from torchmetrics import R2Score
-from torchmetrics import TweedieDevianceScore
-
 from sklearn.preprocessing import MinMaxScaler
-from captum.attr import LayerConductance, LayerActivation, LayerIntegratedGradients
-from captum.attr import IntegratedGradients, DeepLift, GradientShap, NoiseTunnel, FeatureAblation
 
 class BasicRegressor(pl.LightningModule):
     def __init__(self, scaler = None):
@@ -33,13 +17,6 @@ class BasicRegressor(pl.LightningModule):
         self.explained_var = ExplainedVariance()
         self.MAE = MeanAbsoluteError()
         self.MAPE = MeanAbsolutePercentageError()
-        self.SMAPE = SymmetricMeanAbsolutePercentageError()
-        self.WMAPE = WeightedMeanAbsolutePercentageError()
-        self.MSE = MeanSquaredError()
-        self.RMSE = MeanSquaredError(squared=False)
-        self.MSLE = MeanSquaredLogError()
-        self.pearson_coef = PearsonCorrCoef()
-        self.tweedie_dev = TweedieDevianceScore()  # power 0 for normal distribution
 
 
     def log_descaled_values(self):
@@ -53,7 +30,7 @@ class BasicRegressor(pl.LightningModule):
         labels = batch["label"]
 
         loss, outputs = self(sequences, labels)
-        self.log("train/loss_epoch", loss, prog_bar=True, logger=True)
+        self.log("train|MSE", loss, prog_bar=True, logger=True)
 
         return loss
 
@@ -61,18 +38,9 @@ class BasicRegressor(pl.LightningModule):
         sequences = batch["sequence"]
         labels = batch["label"]
         loss, outputs = self(sequences, labels)
-        self.log("val/loss_epoch", loss, prog_bar=True, logger=True)
-        self.log("val/val_mae", self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/val_mse", self.MSE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/rmse", self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("val/mape", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
-
-        self.val_predictions.append(dict(
-            label=labels.item(),
-            model_output=outputs.item(),
-            loss=loss.item()
-        ))
-
+        self.log("val|MSE", loss, prog_bar=True, logger=True)
+        self.log("val|MAE", self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("val|MAPE", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
 
         return loss
 
@@ -88,14 +56,9 @@ class BasicRegressor(pl.LightningModule):
             loss=loss.item()
         ))
 
-        self.log('test/MAE', self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/MAPE', self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/SMAPE', self.SMAPE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/WMAPE', self.WMAPE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/MSE', self.MSE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/RMSE', self.RMSE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log('test/MSLE', self.MSLE(outputs[:,0], labels), prog_bar=True, logger=True)
-        self.log("test/test_loss", loss, prog_bar=True, logger=True)
+        self.log('test|MAE', self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log('test|MAPE', self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.log("test|MSE", loss, prog_bar=True, logger=True)
 
         return loss
 

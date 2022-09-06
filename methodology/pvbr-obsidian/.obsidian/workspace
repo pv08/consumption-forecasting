@@ -7,12 +7,8 @@
         "id": "e09f30232ab59936",
         "type": "leaf",
         "state": {
-          "type": "markdown",
-          "state": {
-            "file": "0.7.3. Ensemble.md",
-            "mode": "source",
-            "source": false
-          }
+          "type": "graph",
+          "state": {}
         }
       }
     ],
@@ -69,7 +65,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "0.7.3. Ensemble.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,6 +84,7 @@
   },
   "active": "e09f30232ab59936",
   "lastOpenFiles": [
+    "0.7.3. Ensemble.md",
     "0.7.2. Etapa de pós-treinamento.md",
     "Bibliography.md",
     "0.7.1. Etapa de pré-processamento.md",
@@ -97,7 +93,6 @@
     "dryar-1944.md",
     "06. energy-consumption-avanços.md",
     "05. energy-consumption-problems.md",
-    "04. energy-consumption-methods-to-use.md",
-    "03. energy-consumption-applications.md"
+    "04. energy-consumption-methods-to-use.md"
   ]
 }
