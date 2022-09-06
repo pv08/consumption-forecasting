@@ -23,6 +23,7 @@ class HUEPreProcessing(BasicDataset):
 
 
     def preProcessData(self, data):
+        data = data.fillna(0)
         self.features_df = data
         self.n_features = len(self.features_df.columns.to_list())
 
@@ -137,6 +138,7 @@ class HUEPreProcessing(BasicDataset):
         mkdir_if_not_exists(f'{self.root_path}/HUE')
         mkdir_if_not_exists(f'{self.root_path}/HUE/{self.resolution}')
         mkdir_if_not_exists(f'{self.root_path}/HUE/{self.resolution}/features/')
+        df = df.fillna(0)
         df.to_csv(f'{self.root_path}/HUE/{self.resolution}/features/residential_{str(self.id)}.csv', index=False)
 
 
