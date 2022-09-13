@@ -31,26 +31,26 @@ class PecanParticipantPreProcessing(BasicDataset):
             self.individual_data = self.individual_data.sort_values(by="localminute").reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
-        self.preProcessData()
+        self.preProcessData(self.features_df)
 
-    def preProcessData(self):
-        n = len(self.features_df)
+    def preProcessData(self, data):
+        n = len(data)
 
-        self.n_features = len(self.features_df.columns.to_list())
+        self.n_features = len(data.columns.to_list())
 
-        self.train_df = self.features_df[0: int(n * .7)]
-        self.val_df = self.features_df[int(n * .7): int(n * (1.1 - .2))]
-        self.test_df = self.features_df[int(n * (1.0 - .1)):]
+        self.train_df = data[0: int(n * .7)]
+        self.val_df = data[int(n * .7): int(n * (1.1 - .2))]
+        self.test_df = data[int(n * (1.0 - .1)):]
 
         print(f"[*] Train dataframe shape: {self.train_df.shape}")
         print(f"[*] Validation dataframe shape: {self.val_df.shape}")
         print(f"[*] Test dataframe shape: {self.test_df.shape}")
 
 
-        self.scaler = self.scaler.fit(self.features_df)
+        self.scaler = self.scaler.fit(data)
 
         self.total_df = pd.DataFrame(
-            self.scaler.transform(self.features_df),
+            self.scaler.transform(data),
             index=self.features_df.index,
             columns=self.features_df.columns
         )

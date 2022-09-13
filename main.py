@@ -12,7 +12,7 @@ def main():
 
 
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='RNN',
+    parser.add_argument('--model', type=str,  default='GRU',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
 
     parser.add_argument('--debug', type=bool, default=False)
@@ -24,9 +24,9 @@ def main():
 
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
-    parser.add_argument('--dataset', type=str, default='HUE', help='[Pecanstreet, HUE]')
+    parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
     parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
-    parser.add_argument('--participant_id', type=str, default='1', help='Pecan Street participant id')
+    parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
     parser.add_argument('--data_type', type=str, default='test_30_all_features', help='Pecan Street participant id')
 
     #Recorrent neural networks hyperparameters
@@ -44,11 +44,11 @@ def main():
                         help='Activation Functions. [sigmoid, gelu, relu]')
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='Learning rate.')
-    parser.add_argument('--num_workers', type=int, default=0,
+    parser.add_argument('--num_workers', type=int, default=3,
                         help='Number of workers to the Pytorch DataLoader.')
     parser.add_argument('--pin_memory', type=bool, default=True,
                         help='Pin Memory to the Pytorch DataLoader.')
-    parser.add_argument('--batch_size', type=int, default=32,
+    parser.add_argument('--batch_size', type=int, default=8,
                         help='Batch size for Pytorch DataLoader.')
     parser.add_argument('--n_epochs', type=int, default=200,
                         help='Number of epochs to train.')
@@ -66,11 +66,11 @@ def main():
                         help='Transformer number of heads.')
     parser.add_argument('--d_ffn', type=int, default=256,
                         help='Transformer number of heads.')
-    parser.add_argument('--max_seq_len', type=int, default=120,
+    parser.add_argument('--max_seq_len', type=int, default=60,
                         help='Transformer number of heads.')
-    parser.add_argument('--d_k', type=any, default=32,
+    parser.add_argument('--d_k', type=any, default=60,
                         help='Transformer number of heads.')
-    parser.add_argument('--d_v', type=any, default=32,
+    parser.add_argument('--d_v', type=any, default=60,
                         help='Transformer number of heads.')
     parser.add_argument('--res_dropout', type=float, default=0.1,
                         help='Transformer number of heads.')
