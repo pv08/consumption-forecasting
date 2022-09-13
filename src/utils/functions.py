@@ -107,19 +107,6 @@ def save_model_figures(model, results, participant):
 
 
 
-def _regressor_ensemble_class_dict(args):
-    args.ensemble_dict_ckpt = dict(zip(args.ensemble_models, _get_multiples_best_epochs(args)))
-
-    ensemble_models = []
-    for model in args.ensemble_models:
-        tmp_args = args
-        tmp_args.model = model
-        ensemble_models.append(_regressor_eval_class_dict(tmp_args, args.ensemble_dict_ckpt[model], args.scaler))
-    model = RecorrentEnsembleRegressor(device=args.device, lr=args.lr, ModelArray=ensemble_models)
-    return model
-
-
-
 def _get_resume_and_best_epoch(task, participant_id, activation_fn, model):
     resume_ckpt = None
     number_last_epoch = None

@@ -32,16 +32,6 @@ class PecanParticipantPreProcessing(BasicDataset):
             self.pre_processing_data()
         self.preProcessData(self.features_df)
 
-<<<<<<< Updated upstream
-    def preProcessData(self, data):
-        n = len(data)
-
-        self.n_features = len(data.columns.to_list())
-
-        self.train_df = data[0: int(n * .7)]
-        self.val_df = data[int(n * .7): int(n * (1.1 - .2))]
-        self.test_df = data[int(n * (1.0 - .1)):]
-=======
     def preProcessData(self, df):
         n = len(df)
 
@@ -50,28 +40,17 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.train_df = df[0: int(n * .7)]
         self.val_df = df[int(n * .7): int(n * (1.1 - .2))]
         self.test_df = df[int(n * (1.0 - .1)):]
->>>>>>> Stashed changes
 
         print(f"[*] Train dataframe shape: {self.train_df.shape}")
         print(f"[*] Validation dataframe shape: {self.val_df.shape}")
         print(f"[*] Test dataframe shape: {self.test_df.shape}")
 
-
-<<<<<<< Updated upstream
-        self.scaler = self.scaler.fit(data)
-
-        self.total_df = pd.DataFrame(
-            self.scaler.transform(data),
-            index=self.features_df.index,
-            columns=self.features_df.columns
-=======
         self.scaler = self.scaler.fit(df)
 
         self.total_df = pd.DataFrame(
             self.scaler.transform(df),
             index=df.index,
             columns=df.columns
->>>>>>> Stashed changes
         )
 
         self.train_df = pd.DataFrame(
