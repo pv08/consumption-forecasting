@@ -97,12 +97,8 @@ class PecanWrapper:
         mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
         mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
         mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/losses')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/forecasting')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/metrics')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/PCA')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/feature_importance')
-
+        self.local_imgs_dir = f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
+        
     def train(self):
         raise NotImplementedError
 

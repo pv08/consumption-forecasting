@@ -9,6 +9,11 @@ import json
 from tqdm import tqdm
 
 
+def descale(descaler, values):
+    values_2d = np.array(values)[:, np.newaxis]
+    return descaler.inverse_transform(values_2d).flatten()
+
+
 
 def mk_weather_data(api, location, start, end, freq):
     mkdir_if_not_exists("data/weather_data/")
@@ -205,6 +210,25 @@ def read_json_file(filepath, filename):
         data = json.load(json_file)
         json_file.close()
     return data
+
+
+def save_json_metrics(content, path, filename, model):
+    try:
+        data = read_json_file(path, filename)
+        models = [result['model'] for result in data]
+        if model not in models:
+            data.append(content)
+            write_json_file(data, path, filename)
+            return "[*] - Content inserted"
+        else:
+            for result in data:
+                if result['model'] == model:
+                    result = content
+                    write_json_file(data, path, filename)
+                    return "[*] - Content updated"
+    except:
+        write_json_file(content, path, filename)
+        return "[*] - New Content created"
 
 
 def write_test_json(path, result, model, task):

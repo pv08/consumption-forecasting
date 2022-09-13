@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-
-from src.utils.functions import mkdir_if_not_exists, mk_weather_data, save_pca_features, create_sequences
+from src.utils.functions import mkdir_if_not_exists, mk_weather_data, create_sequences
 from tqdm import tqdm
 
 from pathlib import Path
@@ -27,12 +26,13 @@ class PecanParticipantPreProcessing(BasicDataset):
             self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.id}_{type}.csv")
             print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         else:
-            self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/{resolution}/{self.id}.csv')
-            self.individual_data = self.individual_data.sort_values(by="localminute").reset_index(drop=True)
+            self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/participants_data/{resolution}/{self.id}.csv')
+            self.individual_data = self.individual_data.sort_values(by="local_15min").reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
         self.preProcessData(self.features_df)
 
+<<<<<<< Updated upstream
     def preProcessData(self, data):
         n = len(data)
 
@@ -41,18 +41,37 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.train_df = data[0: int(n * .7)]
         self.val_df = data[int(n * .7): int(n * (1.1 - .2))]
         self.test_df = data[int(n * (1.0 - .1)):]
+=======
+    def preProcessData(self, df):
+        n = len(df)
+
+        self.n_features = len(df.columns.to_list())
+
+        self.train_df = df[0: int(n * .7)]
+        self.val_df = df[int(n * .7): int(n * (1.1 - .2))]
+        self.test_df = df[int(n * (1.0 - .1)):]
+>>>>>>> Stashed changes
 
         print(f"[*] Train dataframe shape: {self.train_df.shape}")
         print(f"[*] Validation dataframe shape: {self.val_df.shape}")
         print(f"[*] Test dataframe shape: {self.test_df.shape}")
 
 
+<<<<<<< Updated upstream
         self.scaler = self.scaler.fit(data)
 
         self.total_df = pd.DataFrame(
             self.scaler.transform(data),
             index=self.features_df.index,
             columns=self.features_df.columns
+=======
+        self.scaler = self.scaler.fit(df)
+
+        self.total_df = pd.DataFrame(
+            self.scaler.transform(df),
+            index=df.index,
+            columns=df.columns
+>>>>>>> Stashed changes
         )
 
         self.train_df = pd.DataFrame(
@@ -77,19 +96,13 @@ class PecanParticipantPreProcessing(BasicDataset):
         # self.shap_test_sequence = create_sequences(self.total_df[:int(len(self.total_df)*.5)], 'consumption', self.shap_sequence)
         #
 
-        if self.task == 'train':
-            self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
-            self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
-            self.test_sequences = None
-            print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
-            print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
+        self.train_sequences = create_sequences(self.train_df, 'consumption', self.sequence_length)
+        self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
+        self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
+        print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
+        print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
+        print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
 
-        elif self.task in ['test', 'predict', 'ensemble', 'validate']:
-            self.train_sequences = None
-            self.val_sequences = create_sequences(self.val_df, 'consumption', self.sequence_length)
-            self.test_sequences = create_sequences(self.test_df, 'consumption', self.sequence_length)
-            print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
-            print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
 
     def get_sequences(self):
         return self.train_sequences, self.test_sequences, self.val_sequences
@@ -122,7 +135,7 @@ class PecanParticipantPreProcessing(BasicDataset):
 
     def pre_processing_data(self):
         if Path(f"{self.root_path}/Pecanstreet/weather_data/162.89.0.47.csv").is_file():
-            self.weather_df = pd.read_csv(f"{self.root_path}/weather_data/162.89.0.47.csv")
+            self.weather_df = pd.read_csv(f"{self.root_path}/Pecanstreet/weather_data/162.89.0.47.csv")
         else:
             self.weather_df = mk_weather_data(self.key, self.locations, self.start, self.end, self.freq)
 
@@ -142,7 +155,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.weather_df = pd.DataFrame(weather)
 
         new_data = self.individual_data.copy()
-        new_data['crop_date'] = pd.to_datetime(new_data['localminute'])
+        new_data['crop_date'] = pd.to_datetime(new_data['local_15min'])
         new_data['generation_solar1'] = np.where(new_data['solar'] < 0, 0, new_data['solar'])
         new_data['generation_solar2'] = np.where(new_data['solar2'] < 0, 0, new_data['solar2'])
 
@@ -155,7 +168,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         generation = data_columns[len(data_columns) - 2:]
         new_data["sum_generation"] = new_data[generation].sum(axis=1)
 
-        compiled = pd.DataFrame({'date': new_data['localminute'], 'consumption': new_data['sum_consumption'],
+        compiled = pd.DataFrame({'date': new_data['local_15min'], 'consumption': new_data['sum_consumption'],
                                  'generation': new_data['sum_generation'], 'crop_date': new_data['crop_date']})
         df = compiled.copy()
         df['prev_consumption'] = df.shift(1)['consumption']
@@ -203,7 +216,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}")
         mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}/features")
         del self.features_df['date'], self.features_df['hour']
-        self.features_df.to_csv(f"{self.root_path}//Pecanstreet/participants_data/{self.resolution}features/{self.id}_features.csv", index=False)
+        self.features_df.to_csv(f"{self.root_path}//Pecanstreet/participants_data/{self.resolution}/features/{self.id}_test_30_all_features.csv", index=False)
 
 
 

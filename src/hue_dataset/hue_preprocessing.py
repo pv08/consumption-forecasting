@@ -7,6 +7,19 @@ from src.utils.functions import mkdir_if_not_exists, create_sequences
 from typing import List
 from src.pecan_wrapper.basic_dataset import BasicDataset
 
+
+"""
+@data{DVN/N3HGRN_2018,
+author = {Makonin, Stephen},
+publisher = {Harvard Dataverse},
+title = {{HUE: The Hourly Usage of Energy Dataset for Buildings in British Columbia}},
+UNF = {UNF:6:F2ursIn9woKDFzaliyA5EA==},
+year = {2018},
+version = {V5},
+doi = {10.7910/DVN/N3HGRN},
+url = {https://doi.org/10.7910/DVN/N3HGRN}
+}
+"""
 class HUEPreProcessing(BasicDataset):
     def __init__(self, root_path, id, debug, debug_percent,
                  pca_features = None, sequence_length: int = 60,

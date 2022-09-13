@@ -3,6 +3,7 @@ import argparse
 import datetime
 from src.trainer import PecanTrainer
 from src.evaluator import PecanEvaluator
+from src.traditional_ml_models import TraditionalML
 from src.utils.functions import replace_multiple_inputs_str
 from collections import OrderedDict
 
@@ -10,14 +11,18 @@ from collections import OrderedDict
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
-
     #Project Parameterss
+<<<<<<< Updated upstream
     parser.add_argument('--model', type=str,  default='GRU',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, RecorrentEnsemble]')
+=======
+    parser.add_argument('--model', type=str,  default='SVR',
+                            help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
+>>>>>>> Stashed changes
 
     parser.add_argument('--debug', type=bool, default=False)
     parser.add_argument('--debug_percent', type=float, default=0.237)
-    parser.add_argument('--task', type=str, default='train', help='Task of experiment, options: [train, test]')
+    parser.add_argument('--task', type=str, default='traditional_models', help='Task of experiment, options: [train, test, traditional_models]')
     parser.add_argument('--sequence_length', type=int, default=60, help='Sequence length to the sequence training.')
     parser.add_argument('--output_length', required=False, type=int, default=1) #TODO {Implementar multiplas sequências}
     parser.add_argument('--seed', type=int, default=0, help='Seed used for deterministic results')
@@ -25,7 +30,11 @@ def main():
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
     parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
+<<<<<<< Updated upstream
     parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
+=======
+    parser.add_argument('--resolution', type=str, default='15min', help='[1min, 1hour]')
+>>>>>>> Stashed changes
     parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
     parser.add_argument('--data_type', type=str, default='test_30_all_features', help='Pecan Street participant id')
 
@@ -93,6 +102,10 @@ def main():
     elif args.task == 'test':
         evaluator = PecanEvaluator(args)
         evaluator.evaluate()
+    elif args.task == 'traditional_models':
+        TraditionalML(args=args).SVRTest()
+        TraditionalML(args=args).XGBoostTest()
+        
 
     else:
         raise NotImplemented("[?] - Task not implemented. Try using train, test or predict")

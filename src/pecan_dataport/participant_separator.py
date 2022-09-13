@@ -50,6 +50,9 @@ class DataportDataDivisor:
         elif self.resolution == '1s':
             mkdir_if_not_exists('data/participants_data/1s')
             self.exportCustomerData('data/participants_data/1s')
+        elif self.resolution == '15min':
+            mkdir_if_not_exists('data/Pecanstreet/participants_data/15min/features')
+            self.exportCustomerData('data/Pecanstreet/participants_data/15min/features')
 
     def exportCustomerData(self, path: str):
         """
