@@ -86,7 +86,7 @@ class PecanWrapper:
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}')
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        self.local_result_dir = f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
+        self.local_result_dir = f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/'
 
 
         #Create img folders for validation
