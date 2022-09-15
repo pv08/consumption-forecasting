@@ -28,7 +28,7 @@ class PecanTrainer(PecanWrapper):
         every_checkpoint_callback = ModelCheckpoint(
             dirpath=self.every_ckpt_location,
             filename=self.every_ckpt_filename,
-            save_top_k=-1,
+            save_last=True,
             every_n_epochs=1,
             verbose=True,
             monitor="val|MSE",

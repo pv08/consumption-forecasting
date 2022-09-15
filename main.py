@@ -12,12 +12,12 @@ def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='SVR',
+    parser.add_argument('--model', type=str,  default='Transformer',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
 
     parser.add_argument('--debug', type=bool, default=False)
     parser.add_argument('--debug_percent', type=float, default=0.237)
-    parser.add_argument('--task', type=str, default='traditional_models', help='Task of experiment, options: [train, test, traditional_models]')
+    parser.add_argument('--task', type=str, default='train', help='Task of experiment, options: [train, test, traditional_models]')
     parser.add_argument('--sequence_length', type=int, default=60, help='Sequence length to the sequence training.')
     parser.add_argument('--output_length', required=False, type=int, default=1) #TODO {Implementar multiplas sequências}
     parser.add_argument('--seed', type=int, default=0, help='Seed used for deterministic results')
@@ -48,7 +48,7 @@ def main():
                         help='Number of workers to the Pytorch DataLoader.')
     parser.add_argument('--pin_memory', type=bool, default=True,
                         help='Pin Memory to the Pytorch DataLoader.')
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for Pytorch DataLoader.')
     parser.add_argument('--n_epochs', type=int, default=200,
                         help='Number of epochs to train.')
