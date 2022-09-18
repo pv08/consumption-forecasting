@@ -35,6 +35,8 @@ class PecanTrainer(PecanWrapper):
             mode='min'
         )
 
+        every_checkpoint_callback.CHECKPOINT_NAME_LAST = self.every_ckpt_filename
+
         self.callbacks.append(best_checkpoint_callback)
         self.callbacks.append(every_checkpoint_callback)
 
