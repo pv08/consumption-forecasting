@@ -41,6 +41,11 @@ class BasicRegressor(pl.LightningModule):
         self.log("val|MSE", loss, prog_bar=True, logger=True)
         self.log("val|MAE", self.MAE(outputs[:,0], labels), prog_bar=True, logger=True)
         self.log("val|MAPE", self.MAPE(outputs[:,0], labels), prog_bar=True, logger=True)
+        self.val_predictions.append(dict(
+            label=labels.item(),
+            model_output=outputs.item(),
+            loss=loss.item()
+        ))
 
         return loss
 

@@ -49,10 +49,10 @@ class TraditionalML(PecanWrapper):
         y_preds = model_svr.predict(self.X_test) 
 
         result = [{
-                    'model': 'SVR', 
-                    'MSE': mean_squared_error(self.y_test, y_preds),
-                    'MAE': mean_absolute_error(self.y_test, y_preds),
-                    'MAPE': mean_absolute_percentage_error(self.y_test, y_preds)
+                    'test|MAE': mean_absolute_error(self.y_test, y_preds),
+                    'test|MAPE': mean_absolute_percentage_error(self.y_test, y_preds),
+                    'test|MSE': mean_squared_error(self.y_test, y_preds),
+                    'model': 'SVR'
                 }]
         save_json_metrics(content=result, path=self.local_result_dir, filename='metrics_report', model='SVR')
 
@@ -78,7 +78,7 @@ class TraditionalML(PecanWrapper):
 
 
     def XGBoostTest(self):
-        xg_regressor = XGBRegressor(seed=0, objective='reg:squarederror',
+        xg_regressor = XGBRegressor(seed=self.args.seed, objective='reg:squarederror',
                             gamma=1, 
                             learning_rate=0.1, 
                             max_depth=4, 
@@ -91,10 +91,10 @@ class TraditionalML(PecanWrapper):
                  verbose=True)
         y_preds = xg_regressor.predict(self.X_test)
         result = [{
-            'model': 'XGBoost',
-            'MSE': mean_squared_error(self.y_test, y_preds),
-            'MAE': mean_absolute_error(self.y_test, y_preds),
-            'MAPE': mean_absolute_percentage_error(self.y_test, y_preds)
+            'test|MAE': mean_absolute_error(self.y_test, y_preds),
+            'test|MAPE': mean_absolute_percentage_error(self.y_test, y_preds),
+            'test|MSE': mean_squared_error(self.y_test, y_preds),
+            'model': 'XGBoost'
         }]
 
         save_json_metrics(content=result, path=self.local_result_dir, filename='metrics_report', model='XGBoost')
@@ -119,7 +119,7 @@ class TraditionalML(PecanWrapper):
         saveModelPreds(model_name="XGBoost", 
                         data=preds, 
                         title="Descaled consumption predictions", 
-                        path=self.local_imgs_dir, 
+                        path=f"{self.local_imgs_dir}/{self.args.model}", 
                         filename='last_72_h-predictions')
 
 
@@ -130,7 +130,7 @@ class TraditionalML(PecanWrapper):
         validation_evals_results['mse'] = [rmse_error ** 2 for rmse_error in validation_evals_results['rmse']]
 
         losses = [('Train', '-.' ,train_evals_results['mse']), ('Validation', '-', validation_evals_results['mse'])]
-        saveModelLosses(model_name='XGBoost', losses=losses, title='MSE Losses', path=self.local_imgs_dir, filename='train_val_losses')
+        saveModelLosses(model_name='XGBoost', losses=losses, title='MSE Losses', path=f"{self.local_imgs_dir}/{self.args.model}", filename='train_val_losses')
 
         bst = xg_regressor.get_booster()
         for importance_type in ('weight', 'gain', 'cover', 'total_gain', 'total_cover'):
@@ -148,7 +148,7 @@ class TraditionalML(PecanWrapper):
                     condition_node_params=node_params,
                     leaf_node_params=leaf_params)
         render.graph_attr = {'dpi':'600'}
-        render.render(f'{self.local_imgs_dir}/xgboost_tree', format = 'svg')
-        render.render(f'{self.local_imgs_dir}/xgboost_tree', format = 'eps')
-        render.render(f'{self.local_imgs_dir}/xgboost_tree', format = 'png')
+        render.render(f'{self.local_imgs_dir}/{self.args.model}/xgboost_tree', format = 'svg')
+        render.render(f'{self.local_imgs_dir}/{self.args.model}/xgboost_tree', format = 'eps')
+        render.render(f'{self.local_imgs_dir}/{self.args.model}/xgboost_tree', format = 'png')
 

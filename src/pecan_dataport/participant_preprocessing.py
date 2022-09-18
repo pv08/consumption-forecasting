@@ -11,8 +11,8 @@ from src.pecan_wrapper.basic_dataset import BasicDataset
 
 class PecanParticipantPreProcessing(BasicDataset):
     def __init__(self, root_path, id, sequence_length = 120, shap_sequence = 30,
-                 target_column = 'consumption', task = 'train', resolution = '1min', type='test_30_all_features'):
-        super(PecanParticipantPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution)
+                 target_column = 'consumption', task = 'train', resolution = '1min', type='all', shap_model = ''):
+        super(PecanParticipantPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution, type=type)
         self.task = task
         self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
         self.locations = [
@@ -20,14 +20,19 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.start = '01-01-2018'  # date when desired scraping period starts; preferred date format: 'dd-mmm-yyyy'
         self.end = '31-12-2018'  # date when desired scraping period ends; preferred date format: 'dd-mmm-yyyy
         self.freq = 1  # frequency between observations; possible values 1 (1 hour), 3 (3 hours), 6 (6 hours), 12 (12 hours (day/night)) or 24 (daily averages)weather_df = mk_weather_data()
+        self.resolution = resolution
+        self._pecan_idx_column = {
+            '1min': 'localminute',
+            '15min': 'local_15min'
+        }
 
 
-        if Path(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.id}_{type}.csv").is_file():
-            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.id}_{type}.csv")
+        if Path(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}{shap_model}.csv").is_file():
+            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}.csv")
             print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         else:
             self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/participants_data/{resolution}/{self.id}.csv')
-            self.individual_data = self.individual_data.sort_values(by="local_15min").reset_index(drop=True)
+            self.individual_data = self.individual_data.sort_values(by=self._pecan_idx_column[resolution]).reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
         self.preProcessData(self.features_df)
@@ -134,7 +139,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.weather_df = pd.DataFrame(weather)
 
         new_data = self.individual_data.copy()
-        new_data['crop_date'] = pd.to_datetime(new_data['local_15min'])
+        new_data['crop_date'] = pd.to_datetime(new_data[self._pecan_idx_column[self.resolution]])
         new_data['generation_solar1'] = np.where(new_data['solar'] < 0, 0, new_data['solar'])
         new_data['generation_solar2'] = np.where(new_data['solar2'] < 0, 0, new_data['solar2'])
 
@@ -147,7 +152,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         generation = data_columns[len(data_columns) - 2:]
         new_data["sum_generation"] = new_data[generation].sum(axis=1)
 
-        compiled = pd.DataFrame({'date': new_data['local_15min'], 'consumption': new_data['sum_consumption'],
+        compiled = pd.DataFrame({'date': new_data[self._pecan_idx_column[self.resolution]], 'consumption': new_data['sum_consumption'],
                                  'generation': new_data['sum_generation'], 'crop_date': new_data['crop_date']})
         df = compiled.copy()
         df['prev_consumption'] = df.shift(1)['consumption']
@@ -194,8 +199,9 @@ class PecanParticipantPreProcessing(BasicDataset):
 
         mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}")
         mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}/features")
+        mkdir_if_not_exists(f"{self.root_path}/Pecanstreet/participants_data/{self.resolution}/features/{self.type}")
         del self.features_df['date'], self.features_df['hour']
-        self.features_df.to_csv(f"{self.root_path}//Pecanstreet/participants_data/{self.resolution}/features/{self.id}_test_30_all_features.csv", index=False)
+        self.features_df.to_csv(f"{self.root_path}//Pecanstreet/participants_data/{self.resolution}/features/{self.type}/{self.id}_{self._data_type[type]}.csv", index=False)
 
 
 

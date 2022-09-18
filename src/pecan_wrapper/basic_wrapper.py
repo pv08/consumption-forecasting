@@ -1,4 +1,6 @@
+from ast import Pass
 import os
+from pdb import Restart
 from src.pecan_dataport.participant_preprocessing import PecanParticipantPreProcessing
 from src.hue_dataset.hue_preprocessing import HUEPreProcessing
 from src.dataset import PecanDataModule
@@ -18,20 +20,28 @@ import pytorch_lightning as pl
 class PecanWrapper:
     def __init__(self, args):
         self.args = args
+        assert self.args.model in ['LSTM', 'Linear', 'GRU', 'RNN', 'ConvRNN', 'FCN', 'TCN', 'ResNet', 'Transformer', 'MLP', 'TST'], ["[?] - Please select valid deep learing models for entering the training model"]
+        assert self.args.resolution in ['1min', '15min', '1hour'], "[?] - Please select a valida dataset resolution. 1min, 15min and 1 hour are valid ones"
+        assert self.args.dataset in ['Pecanstreet', 'HUE'], ["[?] - Please select valid dataset. HUE or Pecanstreet"]
+        assert self.args.data_type in ['all', 'PCA', 'SHAP'], ["[?] - Please select a valid type of data. all, PCA or SHAP"]
+        
         pl.seed_everything(args.seed)
         self.mkDefaultDirs()
+        self.shap_model = ''
 
+        if self.args.data_type == 'SHAP':
+            self.shap_model = f"_{self.args.model}"
 
         self.callbacks = []
         assert self.args.dataset in ['Pecanstreet', 'HUE'], "[?] - Dataset option not recognized. Select Pecanstreet or HUE"
         if self.args.dataset == 'Pecanstreet':
             self.dataset =  PecanParticipantPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
                                                           sequence_length=self.args.sequence_length, task='train',
-                                                          resolution=self.args.resolution, type=self.args.data_type)
+                                                          resolution=self.args.resolution, type=self.args.data_type, shap_model=self.shap_model)
         elif self.args.dataset == 'HUE':
             self.dataset = HUEPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
                                             debug=self.args.debug, debug_percent=self.args.debug_percent,
-                                            sequence_length=self.args.sequence_length)
+                                            sequence_length=self.args.sequence_length, shap_model=self.shap_model)
 
         self.train_sequences, self.test_sequences, self.val_sequences = self.dataset.train_sequences, self.dataset.test_sequences, self.dataset.val_sequences
         self.args.n_features = self.dataset.n_features
@@ -55,29 +65,29 @@ class PecanWrapper:
         mkdir_if_not_exists('etc/')
         # Create checkpoints folders for training
         mkdir_if_not_exists('etc/ckpts/')
-        mkdir_if_not_exists('etc/ckpts/participants/')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/epochs')
-        self.every_ckpt_location = f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/epochs'
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}')
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}/epochs')
+        self.every_ckpt_location = f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}/epochs'
         self.every_ckpt_filename = f'{self.task}-{self.args.model}-ckpt-{self.args.dataset}-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
 
-        mkdir_if_not_exists(f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/best')
-        self.best_ckpt_location = f'etc/ckpts/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}/best'
+        mkdir_if_not_exists(f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}/best')
+        self.best_ckpt_location = f'etc/ckpts/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}/best'
         self.best_ckpt_filename = f'best-{self.task}-{self.args.model}-ckpt-{self.args.dataset}-participant-id-{self.args.participant_id}' + "_{epoch:03d}"
 
         #Create log folder for training
         mkdir_if_not_exists('etc/log/')
-        mkdir_if_not_exists('etc/log/participants/')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
-        mkdir_if_not_exists(f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        self.local_logger_dir = f'etc/log/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}')
+        self.local_logger_dir = f'etc/log/{self.args.dataset}/{self.task}//{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}'
 
         #Create results folders
         mkdir_if_not_exists('etc/results/')
@@ -85,19 +95,21 @@ class PecanWrapper:
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}')
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}')
         mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
-        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        self.local_result_dir = f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/'
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}')
+        mkdir_if_not_exists(f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}')
+        self.local_result_dir = f'etc/results/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}'
 
 
         #Create img folders for validation
         mkdir_if_not_exists('etc/imgs/')
-        mkdir_if_not_exists('etc/imgs/participants')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
-        mkdir_if_not_exists(f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}')
-        self.local_imgs_dir = f'etc/imgs/participants/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.model}'
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}')
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}/{self.task}')
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}/{self.task}/{self.args.participant_id}')
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}')
+        mkdir_if_not_exists(f'etc/imgs/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}')
+        self.local_imgs_dir = f'etc/imgs/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}'
+        
         
     def train(self):
         raise NotImplementedError

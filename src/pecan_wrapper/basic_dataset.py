@@ -1,7 +1,7 @@
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from typing import Any
 class BasicDataset:
-    def __init__(self, root_path, id, sequence_length, target_column, resolution):
+    def __init__(self, root_path, id, sequence_length, target_column, resolution, type):
         self.root_path = root_path
         self.id = id
         self.sequence_length = sequence_length
@@ -12,6 +12,12 @@ class BasicDataset:
         self.train_sequences = None
         self.val_sequences = None
         self.test_sequences = None
+        self.type = type
+        self._data_type = {
+            'all': 'all_features',
+            'PCA': 'pca_features',
+            'SHAP': 'shap_features'
+        }
 
     def getNFeatures(self):
         return self.n_features

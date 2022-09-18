@@ -23,11 +23,11 @@ url = {https://doi.org/10.7910/DVN/N3HGRN}
 class HUEPreProcessing(BasicDataset):
     def __init__(self, root_path, id, debug, debug_percent,
                  pca_features = None, sequence_length: int = 60,
-                 target_column: str = 'consumption', resolution = '1hour'):
-        super(HUEPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution)
+                 target_column: str = 'consumption', resolution = '1hour', type='all', shap_model=''):
+        super(HUEPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution, type=type)
         #TODO{colocar o PCA features depois}
         try:
-            data = pd.read_csv(f"{self.root_path}/HUE/{self.resolution}/features/residential_{str(self.id)}.csv").sort_values(by=['year', 'month', 'day', 'hour'])
+            data = pd.read_csv(f"{self.root_path}/HUE/participants_data/{self.resolution}/features/{self.type}/residential_{str(self.id)}{shap_model}.csv").sort_values(by=['year', 'month', 'day', 'hour'])
             self.usable_data = data.iloc[:int(len(data) * debug_percent)] if debug else data
         except:
             self.generateFile()
@@ -152,7 +152,7 @@ class HUEPreProcessing(BasicDataset):
         mkdir_if_not_exists(f'{self.root_path}/HUE/{self.resolution}')
         mkdir_if_not_exists(f'{self.root_path}/HUE/{self.resolution}/features/')
         df = df.fillna(0)
-        df.to_csv(f'{self.root_path}/HUE/{self.resolution}/features/residential_{str(self.id)}.csv', index=False)
+        df.to_csv(f'{self.root_path}/HUE/{self.resolution}/features/{self.type}/residential_{str(self.id)}.csv', index=False)
 
 
 

@@ -1,5 +1,8 @@
-from cProfile import label
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from pandas import DataFrame
+from cProfile import label
 from typing import Tuple, List
 
 def saveModelLosses(model_name: str, losses: Tuple[str, str, list], title: str, path: str, filename: str):
@@ -26,3 +29,45 @@ def saveModelPreds(model_name: str, data: Tuple[list, str, str], title: str, pat
     plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
     plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
     return f"[*] - Preds of {model_name} saved on {path}/{filename}"
+
+
+def saveModelMetrics(categories: List[str], data: Tuple[list, str, str, str], title: str, path: str, filename: str):
+    label_lc = np.linspace(start=0, stop=2 * np.pi, num=len(categories))
+    plt.subplot(polar=True)
+    print(data)
+    for values, label, marker, color in data:
+        plt.plot(label_lc, values, marker, c=color, label=label)
+    lines, labels = plt.thetagrids(np.degrees(label_lc), labels=categories)
+    plt.title(title)
+    plt.legend(loc='upper left')
+    plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
+    return f"[*] - Metrics saved on {path}/{filename}"
+
+def savePCACutOffThreshold(values, path, filename, title):
+    plt.ylim(0.0,1.1)
+    plt.plot(values, marker='o', linestyle='--', color='b')
+    plt.xlabel('number of components')
+    plt.ylabel('cumulative explained variance');
+    plt.axhline(y=0.95, color='r', linestyle='-')
+    plt.text(0.5, 0.85, '95% cut-off threshold', color = 'red')
+    plt.title(f"{title}")
+    plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
+    plt.grid(axis='x')
+    return f"[*] - PCA cut-off thresholst saved on {path}/{filename}"
+
+def savePCAHeatMap(df: DataFrame, path, filename):
+    plt.figure(figsize=(20, 20))
+    plt.title(f'[`PCA`] - Features components', fontsize=15)
+
+    ax = sns.heatmap(df,  cmap="YlGnBu")
+    plt.xlabel('Features', fontsize=15)
+    plt.ylabel('[PC] - Components', fontsize=15)
+    plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
+    return f"[*] - PCA uniform heatmap created on {path}/filename"
+

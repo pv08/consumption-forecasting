@@ -7,11 +7,20 @@ import matplotlib.pyplot as plt
 import shap
 import json
 from tqdm import tqdm
-
+from typing import List, Dict
 
 def descale(descaler, values):
     values_2d = np.array(values)[:, np.newaxis]
     return descaler.inverse_transform(values_2d).flatten()
+
+
+def getMetricsByDatasetResolution(path: str, models: List[str]) -> List[Dict]:
+    result = []
+    for model in models:
+        df = pd.read_csv(f'{path}/{model}/validation_metrics.csv', sep=';')
+        df['model'] = model
+        result += json.loads(df.to_json(orient='records'))
+    return result
 
 
 
@@ -204,7 +213,7 @@ def save_json_metrics(content, path, filename, model):
         data = read_json_file(path, filename)
         models = [result['model'] for result in data]
         if model not in models:
-            data.append(content)
+            data += content
             write_json_file(data, path, filename)
             return "[*] - Content inserted"
         else:
