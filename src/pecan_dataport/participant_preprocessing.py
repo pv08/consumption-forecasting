@@ -28,7 +28,7 @@ class PecanParticipantPreProcessing(BasicDataset):
 
 
         if Path(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}{shap_model}.csv").is_file():
-            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}.csv")
+            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}{shap_model}.csv")
             print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
         else:
             self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/participants_data/{resolution}/{self.id}.csv')
