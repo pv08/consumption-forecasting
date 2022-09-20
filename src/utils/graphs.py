@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import shap
 from pandas import DataFrame
 from cProfile import label
 from typing import Tuple, List
+
 
 def saveModelLosses(model_name: str, losses: Tuple[str, str, list], title: str, path: str, filename: str):
     plt.title(f"[`{model_name}`] - {title}")
@@ -69,5 +71,29 @@ def savePCAHeatMap(df: DataFrame, path, filename):
     plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
     plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
     plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
-    return f"[*] - PCA uniform heatmap created on {path}/filename"
+    return f"[*] - PCA uniform heatmap created on {path}/{filename}"
+
+def saveSHAPForce(explainer, shap_values, features_names, path, filename):
+    shap.initjs()
+    shap.force_plot(explainer.expected_value[0], shap_values[0][0], features_names, show=False, matplotlib=True)
+    plt.style.use('fast')
+
+    plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
+    return f"[*] - SHAP force plot created on {path}/{filename}"
+
+def saveSHAPSummaryPlot(shap_values, features, features_names, title, path, filename):
+    shap.initjs()
+    shap.summary_plot(shap_values[0, :, :], features=features, 
+                  feature_names=features_names, 
+                  plot_type='bar', show=False)
+    plt.ylabel("Feature name")
+    plt.xlabel("Average Impact")
+    plt.title(title)
+    plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
+    plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')
+    return f"[*] - SHAP summary plot created on {path}/{filename}"
+
 

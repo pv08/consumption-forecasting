@@ -37,6 +37,7 @@ class HUEPreProcessing(BasicDataset):
 
     def preProcessData(self, data):
         data = data.fillna(0)
+        self.original_data = data.copy()
         self.features_df = data
         self.n_features = len(self.features_df.columns.to_list())
 

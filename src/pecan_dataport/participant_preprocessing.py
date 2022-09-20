@@ -38,6 +38,7 @@ class PecanParticipantPreProcessing(BasicDataset):
         self.preProcessData(self.features_df)
 
     def preProcessData(self, df):
+        self.original_data = df.copy()
         n = len(df)
 
         self.n_features = len(df.columns.to_list())
