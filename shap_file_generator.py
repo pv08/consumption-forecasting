@@ -1,4 +1,3 @@
-from os import EX_UNAVAILABLE, mkdir
 import torch as T
 import argparse
 import datetime
@@ -11,6 +10,7 @@ from src.traditional_ml_models import TraditionalML
 from src.utils.functions import replace_multiple_inputs_str, mkdir_if_not_exists
 from src.utils.graphs import saveSHAPForce, saveSHAPSummaryPlot
 from torch.utils.data import DataLoader
+from src.dataset import PecanDataset
 
 
 from collections import OrderedDict
@@ -97,13 +97,15 @@ def main():
     evaluator = PecanEvaluator(args)
 
     shap_train_loader = DataLoader(
-            evaluator.dataset.train_sequences,
+            PecanDataset(evaluator.dataset.train_sequences, args.device),
+            
             batch_size=32,
             shuffle = False,
             num_workers=0)
 
     shap_test_loader = DataLoader(
-                evaluator.dataset.test_sequences,
+                PecanDataset(evaluator.dataset.test_sequences, args.device),
+                
                 batch_size=10000,
                 shuffle = False,
                 num_workers=0)
@@ -136,7 +138,7 @@ def main():
     "name": evaluator.dataset.original_data.columns.to_list()
     })
     important_values = df.sort_values("mean_abs_shap", ascending=False)[:11]
-    important_columns = df.name.to_list()
+    important_columns = important_values.name.to_list()
     if 'consumption' not in important_columns:
         important_columns.append('consumption')
     orginal_shap_important = evaluator.dataset.original_data[important_columns]
@@ -144,8 +146,8 @@ def main():
         'Pecanstreet': f'{args.participant_id}_shap_features_{args.model}.csv',
         'HUE': f'residential_{args.participant_id}_{args.model}.csv'
     }
-    orginal_shap_important.to_csv(f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
-    print("[!] - SHAP important features saved on", f'{args.root_path}/{args.dataset}/parti cipants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
+    orginal_shap_important.to_csv(f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}', index=False)
+    print("[!] - SHAP important features saved on", f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
     saveSHAPSummaryPlot(shap_values=shap_values, features=test_sequences[0, :,:], 
                         features_names=evaluator.dataset.original_data.columns.to_list(),
                         title=f"[`{args.model}`] - Feature Importance", path=local_path, filename=f"{args.model}_summary_plot")

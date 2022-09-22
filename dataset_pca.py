@@ -13,9 +13,9 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--root', type=str, default='data/')
     parser.add_argument('--task', type=str, default='single-step', help=['single-step', 'multi-step'])
-    parser.add_argument('--dataset', type=str, default='HUE', help=['Pecanstreet', 'HUE'])
+    parser.add_argument('--dataset', type=str, default='Pecanstreet', help=['Pecanstreet', 'HUE'])
     parser.add_argument('--resolution', type=str, default='1hour', help=['1min', '15min', '1hour'])
-    parser.add_argument('--id', type=str, default='1')
+    parser.add_argument('--id', type=str, default='661')
     args = parser.parse_args()
 
     filename_dict = {
@@ -62,7 +62,7 @@ def main():
     most_important_name = list(dict.fromkeys(most_important_names))
     importante_features_df = original_data[most_important_names]
     try:
-        importante_features_df.to_csv(f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}")
+        importante_features_df.to_csv(f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}", index=False)
         print("[!] - Feature importance extraction by PCA concluded. Saved on", 
                 f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}")
     except:
