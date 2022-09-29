@@ -41,7 +41,7 @@ class PecanWrapper:
         elif self.args.dataset == 'HUE':
             self.dataset = HUEPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
                                             debug=self.args.debug, debug_percent=self.args.debug_percent,
-                                            sequence_length=self.args.sequence_length, shap_model=self.shap_model)
+                                            sequence_length=self.args.sequence_length, shap_model=self.shap_model, type=self.args.data_type)
 
         self.train_sequences, self.test_sequences, self.val_sequences = self.dataset.train_sequences, self.dataset.test_sequences, self.dataset.val_sequences
         self.args.n_features = self.dataset.n_features
