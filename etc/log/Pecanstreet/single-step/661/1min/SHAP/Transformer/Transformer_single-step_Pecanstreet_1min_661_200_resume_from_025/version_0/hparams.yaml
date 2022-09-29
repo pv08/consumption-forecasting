@@ -1,0 +1,12 @@
+activation_function: gelu
+d_ffn: 256
+d_model: 128
+device: !!python/object/apply:torch.device
+- cuda
+- 0
+dropout: 0.2
+lr: 1.0e-05
+n_features: 11
+n_head: 16
+n_layers: 3
+scaler: null
