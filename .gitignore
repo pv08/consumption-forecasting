@@ -2,3 +2,4 @@
 /data/
 /wandb/
 /etc/imgs/
+*.pyc

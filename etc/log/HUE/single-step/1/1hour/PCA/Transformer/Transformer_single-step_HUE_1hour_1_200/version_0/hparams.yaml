@@ -6,7 +6,7 @@ device: !!python/object/apply:torch.device
 - 0
 dropout: 0.2
 lr: 1.0e-05
-n_features: 16
+n_features: 12
 n_head: 16
 n_layers: 3
 scaler: null

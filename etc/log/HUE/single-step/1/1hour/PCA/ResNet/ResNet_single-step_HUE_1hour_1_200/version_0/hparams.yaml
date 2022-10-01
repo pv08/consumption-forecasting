@@ -3,5 +3,5 @@ device: !!python/object/apply:torch.device
 - cuda
 - 0
 lr: 1.0e-05
-n_features: 16
+n_features: 12
 scaler: null
