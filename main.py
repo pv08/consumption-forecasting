@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='GRU',
+    parser.add_argument('--model', type=str,  default='MLP',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
 
     parser.add_argument('--debug', type=bool, default=False)
@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
     parser.add_argument('--resolution', type=str, default='1min', help='[1min, 1hour]')
     parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
-    parser.add_argument('--data_type', type=str, default='SHAP', help='[all, PCA, SHAP]]')
+    parser.add_argument('--data_type', type=str, default='PCA', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -50,7 +50,7 @@ def main():
                         help='Pin Memory to the Pytorch DataLoader.')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for Pytorch DataLoader.')
-    parser.add_argument('--n_epochs', type=int, default=200,
+    parser.add_argument('--n_epochs', type=int, default=201,
                         help='Number of epochs to train.')
     parser.add_argument('--early_stopping', type=bool, default=False,
                         help='Able early stopping.')
