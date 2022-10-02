@@ -12,12 +12,12 @@ def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='GRU',
+    parser.add_argument('--model', type=str,  default='TST',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
 
     parser.add_argument('--debug', type=bool, default=False)
     parser.add_argument('--debug_percent', type=float, default=0.237)
-    parser.add_argument('--task', type=str, default='train', help='Task of experiment, options: [train, test, traditional_models]')
+    parser.add_argument('--task', type=str, default='test', help='Task of experiment, options: [train, test, traditional_models]')
     parser.add_argument('--sequence_length', type=int, default=60, help='Sequence length to the sequence training.')
     parser.add_argument('--output_length', required=False, type=int, default=1) #TODO {Implementar multiplas sequências}
     parser.add_argument('--seed', type=int, default=0, help='Seed used for deterministic results')
@@ -25,9 +25,9 @@ def main():
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
     parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
-    parser.add_argument('--resolution', type=str, default='1min', help='[1min, 1hour]')
+    parser.add_argument('--resolution', type=str, default='15min', help='[1min, 1hour]')
     parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
-    parser.add_argument('--data_type', type=str, default='SHAP', help='[all, PCA, SHAP]]')
+    parser.add_argument('--data_type', type=str, default='PCA', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -66,7 +66,7 @@ def main():
                         help='Transformer number of heads.')
     parser.add_argument('--d_ffn', type=int, default=256,
                         help='Transformer number of heads.')
-    parser.add_argument('--max_seq_len', type=int, default=120,
+    parser.add_argument('--max_seq_len', type=int, default=60,
                         help='Transformer number of heads.')
     parser.add_argument('--d_k', type=any, default=32,
                         help='Transformer number of heads.')
@@ -98,6 +98,8 @@ def main():
     elif args.task == 'traditional_models':
         TraditionalML(args=args).SVRTest()
         TraditionalML(args=args).XGBoostTest()
+        TraditionalML(args=args).statisticalModel()
+
         print(f"[!] - Evaluation of traditional models completed")
     else:
         raise NotImplemented("[?] - Task not implemented. Try using train, test or predict")

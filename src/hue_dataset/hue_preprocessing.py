@@ -27,7 +27,7 @@ class HUEPreProcessing(BasicDataset):
         super(HUEPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution, type=type)
         #TODO{colocar o PCA features depois}
         try:
-            data = pd.read_csv(f"{self.root_path}/HUE/participants_data/{self.resolution}/features/{self.type}/residential_{str(self.id)}{shap_model}.csv").sort_values(by=['year', 'month', 'day', 'hour'])
+            data = pd.read_csv(f"{self.root_path}/HUE/participants_data/{self.resolution}/features/{self.type}/residential_{str(self.id)}{shap_model}.csv")
             self.usable_data = data.iloc[:int(len(data) * debug_percent)] if debug else data
         except:
             self.generateFile()
@@ -74,6 +74,10 @@ class HUEPreProcessing(BasicDataset):
 
         self.test_sequences = create_sequences(input_data=self.scalable_test_df,target_column=self.target_column,
                                                 sequence_lenght=self.sequence_length)
+
+        print(f"[!] Train sequence shape: {self.train_sequences[0][0].shape}")
+        print(f"[!] Val sequence shape: {self.val_sequences[0][0].shape}")
+        print(f"[!] Test sequence shape: {self.test_sequences[0][0].shape}")
 
 
 

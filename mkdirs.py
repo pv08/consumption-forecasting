@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from pyexpat import model
 from src.utils.functions import mkdir_if_not_exists
-from main import train
 def main():
     models = ['LSTM', 'GRU', 'RNN', 'ConvRNN', 'FCN', 'TCN', 'ResNet', 'Transformer', 'MLP', 'TST']
     resolutions = ['1min', '15min', '1hour']

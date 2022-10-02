@@ -13,9 +13,9 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--root', type=str, default='data/')
     parser.add_argument('--task', type=str, default='single-step', help=['single-step', 'multi-step'])
-    parser.add_argument('--dataset', type=str, default='Pecanstreet', help=['Pecanstreet', 'HUE'])
+    parser.add_argument('--dataset', type=str, default='HUE', help=['Pecanstreet', 'HUE'])
     parser.add_argument('--resolution', type=str, default='1hour', help=['1min', '15min', '1hour'])
-    parser.add_argument('--id', type=str, default='661')
+    parser.add_argument('--id', type=str, default='1')
     args = parser.parse_args()
 
     filename_dict = {
@@ -45,13 +45,13 @@ def main():
     loadings = features_pca.components_
     mkdir_if_not_exists(f'etc/imgs/{args.dataset}/{args.task}/{args.id}/{args.resolution}/PCA-Study')
     local_pca_path = f'etc/imgs/{args.dataset}/{args.task}/{args.id}/{args.resolution}/PCA-Study'
-    savePCACutOffThreshold(np.cumsum(pca.explained_variance_ratio_), 
-                                    path=local_pca_path, 
-                                    filename=f'{args.dataset}-{args.resolution}_pca_cut_off_threshold',
-                                    title='Best number of PCA components')
+    # savePCACutOffThreshold(np.cumsum(pca.explained_variance_ratio_), 
+    #                                 path=local_pca_path, 
+    #                                 filename=f'{args.dataset}-{args.resolution}_pca_cut_off_threshold',
+    #                                 title='Best number of PCA components')
     pca_result_df = pd.DataFrame(pca.components_, columns = df.columns)
 
-    savePCAHeatMap(pca_result_df, local_pca_path, f"{args.dataset}-{args.resolution}-PCA_heatmap")
+    # savePCAHeatMap(pca_result_df, local_pca_path, f"{args.dataset}-{args.resolution}-PCA_heatmap")
     n_pcs= pca.n_components_ 
     # get the index of the most important feature on EACH component
     most_important = [np.abs(pca.components_[i]).argmax() for i in range(n_pcs)]
@@ -62,7 +62,7 @@ def main():
     most_important_name = list(dict.fromkeys(most_important_names))
     importante_features_df = original_data[most_important_names]
     try:
-        importante_features_df.to_csv(f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}", index=False)
+        importante_features_df.to_csv(f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}")
         print("[!] - Feature importance extraction by PCA concluded. Saved on", 
                 f"{args.root}/{args.dataset}/participants_data/{args.resolution}/features/PCA/{pca_filename_dict[args.dataset]}")
     except:

@@ -1,9 +1,12 @@
 from dataclasses import dataclass
+from pyexpat import model
 import pandas as pd
 import numpy as np
 import xgboost as xg
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 from scipy import stats
 from src.utils.functions import mkdir_if_not_exists, save_json_metrics, descale
 from sklearn.preprocessing import MinMaxScaler
@@ -23,6 +26,41 @@ class TraditionalML(PecanWrapper):
         scale_label_idx = list(self.dataset.scaler.feature_names_in_).index('consumption')
         self.descaler.min_ = self.dataset.scaler.min_[scale_label_idx]
         self.descaler.scale_ = self.dataset.scaler.scale_[scale_label_idx]
+    
+    def statisticalModel(self):
+        model_train = SARIMAX(self.y_train,  order=(4,1,3), seasonal_order=(2,0,2,12)).fit()
+        model_test = SARIMAX(self.y_test,  order=(4,1,3), seasonal_order=(2,0,2,12)).fit(model_train.params)
+        y_preds = model_test.predict(typ='levels')
+        result = [{
+            'test|MAE': mean_absolute_error(self.y_test, y_preds),
+            'test|MAPE': mean_absolute_percentage_error(self.y_test, y_preds),
+            'test|MSE': mean_squared_error(self.y_test, y_preds),
+            'model': 'SARIMAX'
+        }]
+        save_json_metrics(content=result, path=self.local_result_dir, filename='metrics_report', model='SARIMAX')
+        test_preds = []
+        for preds, labels in zip(list(y_preds), self.y_test.to_list()):
+            test_preds.append(dict(
+                model='SARIMAX',
+                label=float(labels),
+                model_output=float(preds)
+            ))
+
+
+        model_infer = pd.DataFrame(test_preds)
+        model_infer.label = descale(self.descaler, model_infer.label)
+        model_infer.model_output = descale(self.descaler, model_infer.model_output)
+        model_infer.to_csv(f"{self.local_result_dir}/SARIMAX.csv")
+        preds = [(model_infer.label[-72:].values, '-.', 'Real'), (model_infer.model_output[-72:].values, '-', 'Prediction')]
+        saveModelPreds(model_name="SARIMAX", 
+                        data=preds, 
+                        title="Descaled consumption predictions", 
+                        path=self.local_imgs_dir, 
+                        filename='last_72_h-predictions')
+
+
+
+
 
 
     def SVRTest(self):

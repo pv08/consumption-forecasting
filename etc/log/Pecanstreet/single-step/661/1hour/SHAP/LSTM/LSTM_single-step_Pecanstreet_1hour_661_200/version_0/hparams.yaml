@@ -1,0 +1,11 @@
+activation_function: sigmoid
+bidirectional: false
+device: !!python/object/apply:torch.device
+- cuda
+- 0
+dropout: 0.2
+lr: 1.0e-05
+n_features: 12
+n_hidden: 256
+n_layers: 3
+scaler: null

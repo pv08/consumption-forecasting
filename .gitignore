@@ -3,3 +3,4 @@
 /wandb/
 /etc/imgs/
 *.pyc
+*.DS_Store
