@@ -44,7 +44,7 @@ class PecanEvaluator(PecanWrapper):
         test_df.label = descale(descaler, test_df.label)
         test_df.model_output = descale(descaler, test_df.model_output)
         test_df.to_csv(f"{self.local_result_dir}/{self.args.model}/test_preds{self.args.data_type if self.args.resolution == '1min' else ''}.csv")
-        save_json_metrics(content=test_result, path=self.local_result_dir, filename=f"metrics_report{self.args.data_type if self.args.resolution == '1min' else ''}", model=self.args.model)
+        save_json_metrics(content=test_result, path=self.local_result_dir, filename=f"metrics_report", model=self.args.model)
 
         return test_result
 

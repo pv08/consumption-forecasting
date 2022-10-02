@@ -27,6 +27,7 @@ class TraditionalML(PecanWrapper):
         self.descaler.min_ = self.dataset.scaler.min_[scale_label_idx]
         self.descaler.scale_ = self.dataset.scaler.scale_[scale_label_idx]
     
+    
     def statisticalModel(self):
         model_train = SARIMAX(self.y_train,  order=(4,1,3), seasonal_order=(2,0,2,12)).fit()
         model_test = SARIMAX(self.y_test,  order=(4,1,3), seasonal_order=(2,0,2,12)).fit(model_train.params)

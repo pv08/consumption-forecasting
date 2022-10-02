@@ -23,7 +23,7 @@ class PecanWrapper:
         if self.args.task == 'train' or self.args.task == 'test':
             assert self.args.model in ['LSTM', 'Linear', 'GRU', 'RNN', 'ConvRNN', 'FCN', 'TCN', 'ResNet', 'Transformer', 'MLP', 'TST'], ["[?] - Please select valid deep learing models for entering the training model"]
         elif self.args.task == 'traditional_models':
-            assert self.args.model in ['XGBoost', 'SVR'], ["[?] - Please select valid deep learing models for entering the training model"]                    
+            assert self.args.model in ['XGBoost', 'SVR', 'SARIMAX'], ["[?] - Please select valid deep learing models for entering the training model"]                    
         assert self.args.resolution in ['1min', '15min', '1hour'], "[?] - Please select a valida dataset resolution. 1min, 15min and 1 hour are valid ones"
         assert self.args.dataset in ['Pecanstreet', 'HUE'], ["[?] - Please select valid dataset. HUE or Pecanstreet"]
         assert self.args.data_type in ['all', 'PCA', 'SHAP'], ["[?] - Please select a valid type of data. all, PCA or SHAP"]

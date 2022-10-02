@@ -13,13 +13,13 @@ def main():
 
     #Project Parameterss
 
-    parser.add_argument('--model', type=str,  default='TST',
+    parser.add_argument('--model', type=str,  default='SARIMAX',
 
-                            help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
+                            help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR, SARIMAX]')
 
     parser.add_argument('--debug', type=bool, default=False)
     parser.add_argument('--debug_percent', type=float, default=0.237)
-    parser.add_argument('--task', type=str, default='test', help='Task of experiment, options: [train, test, traditional_models]')
+    parser.add_argument('--task', type=str, default='traditional_models', help='Task of experiment, options: [train, test, traditional_models]')
     parser.add_argument('--sequence_length', type=int, default=60, help='Sequence length to the sequence training.')
     parser.add_argument('--output_length', required=False, type=int, default=1) #TODO {Implementar multiplas sequências}
     parser.add_argument('--seed', type=int, default=0, help='Seed used for deterministic results')
@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
     parser.add_argument('--resolution', type=str, default='15min', help='[1min, 1hour]')
     parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
-    parser.add_argument('--data_type', type=str, default='PCA', help='[all, PCA, SHAP]]')
+    parser.add_argument('--data_type', type=str, default='all', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
     parser.add_argument('--bidirectional', type=bool, default=False,
