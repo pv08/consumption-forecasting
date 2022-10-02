@@ -26,9 +26,9 @@ def main():
 
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
-    parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
-    parser.add_argument('--resolution', type=str, default='15min', help='[1min, 1hour]')
-    parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
+    parser.add_argument('--dataset', type=str, default='HUE', help='[Pecanstreet, HUE]')
+    parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
+    parser.add_argument('--participant_id', type=str, default='1', help='Pecan Street participant id')
     parser.add_argument('--data_type', type=str, default='all', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
