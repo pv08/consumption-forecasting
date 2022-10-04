@@ -14,7 +14,7 @@ class BasicDataset:
         self.test_sequences = None
         self.type = type
         self._data_type = {
-            'all': 'all_features',
+            'all': 'features',
             'PCA': 'pca_features',
             'SHAP': 'shap_features'
         }

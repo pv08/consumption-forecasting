@@ -20,11 +20,11 @@ def saveModelLosses(model_name: str, losses: Tuple[str, str, list], title: str, 
   
     return f"[*] - Losses of {model_name} saved on {path}/{filename}"
 
-def saveModelPreds(model_name: str, data: Tuple[list, str, str], title: str, path: str, filename:str):
+def saveModelPreds(model_name: str, data: Tuple[list, str, str], title: str, path: str, filename:str, resolution:str):
     plt.title(f"[`{model_name}`] - {title}")
     for value, marker, label in data:
         plt.plot(value, marker, label=label)
-    plt.xlabel(r'Time [h]')
+    plt.xlabel(f'Time [{resolution}]')
     plt.ylabel(r'Energy [kW]')
     plt.legend()
     plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
@@ -34,14 +34,16 @@ def saveModelPreds(model_name: str, data: Tuple[list, str, str], title: str, pat
 
 
 def saveModelMetrics(categories: List[str], data: Tuple[list, str, str, str], title: str, path: str, filename: str):
+    categories = [*categories, categories[0]]
     label_lc = np.linspace(start=0, stop=2 * np.pi, num=len(categories))
     plt.subplot(polar=True)
     print(data)
     for values, label, marker, color in data:
+        values = [*values, values[0]]
         plt.plot(label_lc, values, marker, c=color, label=label)
     lines, labels = plt.thetagrids(np.degrees(label_lc), labels=categories)
     plt.title(title)
-    plt.legend(loc='upper left')
+    plt.legend(loc='upper left', bbox_to_anchor=(-0.15, 0.))
     plt.savefig(f'{path}/{filename}.eps', dpi=600, bbox_inches='tight')
     plt.savefig(f'{path}/{filename}.svg', dpi=600, bbox_inches='tight')
     plt.savefig(f'{path}/{filename}.png', dpi=600, bbox_inches='tight')

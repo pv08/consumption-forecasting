@@ -40,7 +40,8 @@ class PecanWrapper:
         if self.args.dataset == 'Pecanstreet':
             self.dataset =  PecanParticipantPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
                                                           sequence_length=self.args.sequence_length, task='train',
-                                                          resolution=self.args.resolution, type=self.args.data_type, shap_model=self.shap_model)
+                                                          resolution=self.args.resolution, type=self.args.data_type, shap_model=self.shap_model, 
+                                                          debug=self.args.debug, debug_percent=self.args.debug_percent)
         elif self.args.dataset == 'HUE':
             self.dataset = HUEPreProcessing(root_path=self.args.root_path, id=self.args.participant_id,
                                             debug=self.args.debug, debug_percent=self.args.debug_percent,

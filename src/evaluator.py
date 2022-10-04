@@ -26,7 +26,7 @@ class PecanEvaluator(PecanWrapper):
         for preds in self.regressor.val_predictions:
             preds['model'] = self.args.model
         validation_df = pd.DataFrame(self.regressor.val_predictions)
-        validation_df.to_csv(f"{self.local_result_dir}/{self.args.model}/validation_preds{self.args.data_type if self.args.resolution == '1min' else ''}.csv")
+        validation_df.to_csv(f"{self.local_result_dir}/{self.args.model}/validation_preds.csv")
         save_json_metrics(content=validation_result, path=f"{self.local_result_dir}/", filename=f"validation_metrics_report{self.args.data_type if self.args.resolution == '1min' else ''}", model=self.args.model)
         
 
@@ -43,7 +43,7 @@ class PecanEvaluator(PecanWrapper):
         test_df = pd.DataFrame(self.regressor.test_predictions)
         test_df.label = descale(descaler, test_df.label)
         test_df.model_output = descale(descaler, test_df.model_output)
-        test_df.to_csv(f"{self.local_result_dir}/{self.args.model}/test_preds{self.args.data_type if self.args.resolution == '1min' else ''}.csv")
+        test_df.to_csv(f"{self.local_result_dir}/{self.args.model}/test_preds.csv")
         save_json_metrics(content=test_result, path=self.local_result_dir, filename=f"metrics_report", model=self.args.model)
 
         return test_result

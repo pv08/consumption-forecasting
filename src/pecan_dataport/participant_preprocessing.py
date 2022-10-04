@@ -11,7 +11,7 @@ from src.pecan_wrapper.basic_dataset import BasicDataset
 
 class PecanParticipantPreProcessing(BasicDataset):
     def __init__(self, root_path, id, sequence_length = 120, shap_sequence = 30,
-                 target_column = 'consumption', task = 'train', resolution = '1min', type='all', shap_model = ''):
+                 target_column = 'consumption', task = 'train', resolution = '1min', type='all', shap_model = '', debug: bool=False, debug_percent: float=0.287):
         super(PecanParticipantPreProcessing, self).__init__(root_path=root_path, id=id, sequence_length=sequence_length, target_column=target_column, resolution=resolution, type=type)
         self.task = task
         self.key = '53a4996903bc42d9a47162143210210'  # API key obtained from https://www.worldweatheronline.com/
@@ -26,18 +26,26 @@ class PecanParticipantPreProcessing(BasicDataset):
             '15min': 'local_15min'
         }
 
-
-        if Path(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}{shap_model}.csv").is_file():
-            self.features_df = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[self.type]}{shap_model}.csv")
-            print(f"[!] - Trainable dataframe shape - {self.features_df.shape}")
-        else:
+        try:
+            data = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[type]}{shap_model}.csv")
+            self.usable_data = data.iloc[:int(len(data) * debug_percent)] if debug else data
+            if debug:
+                print(f"[!] - Attention please. You are using debug state. Only {debug_percent} of data will be used: Data Shape", self.usable_data.shape)
+            else:
+                print(f"[!] - Attention please. You are not using debug state. 100% of data will be used: Data Shape", self.usable_data.shape)
+            print(f"[!] - Trainable dataframe shape - {self.usable_data.shape}")
+        except:
+            print("[*] - Feature files not exists. Creating new one")
             self.individual_data = pd.read_csv(f'{self.root_path}/Pecanstreet/participants_data/{resolution}/{self.id}.csv')
             self.individual_data = self.individual_data.sort_values(by=self._pecan_idx_column[resolution]).reset_index(drop=True)
             print(f"[!] - Shape of initial data: {self.individual_data.shape}")
             self.pre_processing_data()
-        self.preProcessData(self.features_df)
+            raise FileExistsError("[*] - File not exist. Generated features files. Try again!")
+
+        self.preProcessData(df=self.usable_data)
 
     def preProcessData(self, df):
+        self.features_df = df
         self.original_data = df.copy()
         n = len(df)
 

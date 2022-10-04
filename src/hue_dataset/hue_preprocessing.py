@@ -29,6 +29,12 @@ class HUEPreProcessing(BasicDataset):
         try:
             data = pd.read_csv(f"{self.root_path}/HUE/participants_data/{self.resolution}/features/{self.type}/residential_{str(self.id)}{shap_model}.csv")
             self.usable_data = data.iloc[:int(len(data) * debug_percent)] if debug else data
+            if debug:
+                print(f"[!] - Attention please. You are using debug state. Only {debug_percent} of data will be used: Data Shape", self.usable_data.shape)
+            else:
+                print(f"[!] - Attention please. You are not using debug state. 100% of data will be used: Data Shape", self.usable_data.shape)
+            print(f"[!] - Trainable dataframe shape - {self.usable_data.shape}")
+
         except:
             self.generateFile()
             raise FileExistsError("[*] - File not exist. Generated features files. Try again!")
