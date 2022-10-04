@@ -30,7 +30,7 @@ class PecanParticipantPreProcessing(BasicDataset):
             data = pd.read_csv(f"{self.root_path}/Pecanstreet/participants_data/{resolution}/features/{self.type}/{self.id}_{self._data_type[type]}{shap_model}.csv")
             self.usable_data = data.iloc[:int(len(data) * debug_percent)] if debug else data
             if debug:
-                print(f"[!] - Attention please. You are using debug state. Only {debug_percent} of data will be used: Data Shape", self.usable_data.shape)
+                print(f"[!] - Attention please. You are using debug state. Only {debug_percent*100}% of data will be used: Data Shape", self.usable_data.shape)
             else:
                 print(f"[!] - Attention please. You are not using debug state. 100% of data will be used: Data Shape", self.usable_data.shape)
             print(f"[!] - Trainable dataframe shape - {self.usable_data.shape}")
