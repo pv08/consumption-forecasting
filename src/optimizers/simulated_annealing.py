@@ -1,135 +1,108 @@
-import math
 import numpy as np
-from random import randint, random
-class   SimulatedAnnealing:
+from pyexpat import model
+from math import exp
+from typing import Dict, List
+from random import uniform
+from sklearn.metrics import mean_squared_error
+from src.utils.functions import write_json_file, mkdir_if_not_exists
 
-    def __init__(self, guide_func, label, models_prediction, x0, model_names, cooling_schedule='linear',
-                 step_max=10000, t_min=0, t_max=1000, alpha=None):
-
-        assert cooling_schedule in ['linear', 'exponential', 'logarithmic', 'quadratic'], 'cooling_schedule must be either in ["linear", "exponential", "logarithmic", "quadratic"]'
-
-        self.label = label
-        self.guide_func = guide_func
-        self.predictions = models_prediction
-        self.t = t_max
-        self.t_max = t_max
-        self.t_min = t_min
-        self.step_max = step_max
+class SA:
+    def __init__(self, initial_weights: Dict[str, float], 
+                model_predictions: Dict[str, List], 
+                default_label: List[float],
+                filepath: str, 
+                t_0: float=1000, 
+                t_f: float=1e-20,
+                patience=1000, minTempI: int=200, energyDiff: float=0.01, tempAlpha: float=0.95):
+        self.t = t_0
+        self.t_f = t_f
+        self.filepath = filepath
+        self.default_label = default_label
+        self.current_weights = dict(sorted(initial_weights.items()))
+        self.model_predictions = dict(sorted(model_predictions.items()))
+        self.patience = patience
+        self.minTempI = minTempI
+        self.energyDiff = energyDiff
+        self.tempAlpha = tempAlpha
+        
+        self.current_energy = self.verifySysEnergy(model_predictions=self.model_predictions, weights=self.current_weights, label=self.default_label)
+        self.best_energy = [self.current_energy]
         self.hist = []
-        self.cooling_schedule = cooling_schedule
+        self.best_energy_hist = []
+        
 
-        if alpha != None:
-            self.alpha = alpha
-            self.cooling_dict = {
-                'linear': self.cooling_linear_m,
-                'quadratic': self.cooling_quadratic_m,
-                'exponential': self.cooling_exponential_m,
-                'logarithmic': self.cooling_logarithmic_m
-            }
-        else:
-            self.cooling_dict = {
-                'linear': self.cooling_linear_a,
-                'quadratic': self.cooling_quadratic_a
-            }
-        self.cost_func = self.EnsembleMSEFunc
-        self.x0 = x0
-        self.current_state = self.x0
-        self.current_energy = self.EnsembleMSEFunc(guide_func, self.x0, label, models_prediction)
-        self.best_state = self.current_state
-        self.best_energy = self.current_energy
-
-        self.step, self.accept = 1, 0
-        while self.step < self.step_max and self.t >= self.t_min and self.t > 0:
-            proposed_neighbor = self.get_neighbor(self.current_state)
-
-            E_n = self.cost_func(self.guide_func, proposed_neighbor, self.label, self.predictions)
-            dE = E_n - self.current_energy
-
-            if random() < self.safe_exp(-dE / self.t):
-                self.current_energy = E_n
-                self.current_state = proposed_neighbor[:]
-                self.accept += 1
-
-            if E_n < self.best_energy:
-                self.best_energy = E_n
-                self.best_state = proposed_neighbor[:]
-
-            self.hist.append([self.step, self.t, self.current_energy, self.best_energy])
-
-            self.t = self.cooling_dict[self.cooling_schedule](self.step)
-            self.step += 1
-            print(f"Step: [{self.step}/{self.step_max}] | Temp: {self.t} | Weights Sum: {round(sum(self.best_state), 2)}")
-
-        self.acceptance_rate = self.accept / self.step
-
+    def opt(self):
+        tries = 0
+        k = 0
+        while (self.t > self.t_f) and (tries < self.patience):
+            
+            thermalBalance_t = False
+            i = 0
+            tmpEnergy = []
+            while (not thermalBalance_t) and (tries < self.patience):
+                new_neighbor = self.generateNewWeights(self.current_weights)
+                E_n = self.verifySysEnergy(model_predictions=self.model_predictions, weights=new_neighbor, label=self.default_label)
+                dE = self.current_energy - E_n
+                if dE > 0:
+                    self.current_weights = new_neighbor
+                    tmpEnergy.append(E_n)
+                    self.current_energy = E_n
+                    self.hist.append( {'temp_i':i, 'temp':self.t, 'energy':E_n} )
+                    # print(f"[I-{i}] - Temp: {self.t} | Energy: {E_n}")
+                    i += 1
+                    k += 1
+                else:
+                    p = self.safeExp(dE / self.t )
+                    randVal = uniform(-1, 1)
+                    if (randVal > 0) and (randVal < p):
+                        self.current_weights = new_neighbor
+                        tmpEnergy.append(E_n)
+                        self.current_energy = E_n
+                        self.hist.append( {'temp_i':i, 'temp':self.t, 'energy':E_n} )
+                        # print(f"[I-{i}] - Temp: {self.t} | Energy: {E_n}")
+                        i += 1
+                        k += 1
+                if self.current_energy < min(self.best_energy):
+                    self.best_energy.append(self.current_energy)
+                    self.best_energy_hist.append({'global_iteration': k, 'energy': self.current_energy, 'temp': self.t})
+                if (i % self.minTempI == 0) and (i > 0):
+                    avgTmpEnergy = np.average(tmpEnergy[-i: -1]) # ignorando o adicionado
+                    if (avgTmpEnergy - self.current_energy) < self.energyDiff:
+                        thermalBalance_t = True
+                        print(f"[!] - Thermal balance reached for temp {self.t}. | Best Energy: {min(self.best_energy)} | Try: {tries}-{self.patience}")
+                        self.t *= self.tempAlpha
+                        # print(f"[!] - Temp decreased to {self.t}")
+                    else:
+                        # print(f"[?] - Thermal Balance not reached. Try: {tries}-{self.patience}")
+                        tries += 1
+        
+        write_json_file(value=self.current_weights, filepath=self.filepath, filename='validation_weights')
+        write_json_file(value=self.hist, filepath=self.filepath, filename='global_hist')
+        write_json_file(value=self.best_energy_hist, filepath=self.filepath, filename='best_hist')
+        print(f"******** Thermal Balance reached at {self.t} - {min(self.best_energy)}")
+                    
 
     @staticmethod
-    def get_neighbor(current_state):
-        neighbor = current_state.copy()
+    def safeExp(x: float):
+        try: 
+            return exp(x)
+        except:
+            return 0
+    
+    
+    def verifySysEnergy(self, model_predictions: Dict[str, List], weights: Dict[str, float], label: List[float]) -> float:
+        avg_preds = np.average([*model_predictions.values()], axis=0, weights=[*weights.values()])
+        return mean_squared_error(label, avg_preds)
 
+    
+    def generateNewWeights(self, weights: Dict[str, float]) -> Dict[str, float]:
+        listWeights = [*weights.values()]
         while True:
-            p1, p2 = np.random.randint(0, len(current_state)), np.random.randint(0, len(current_state))
+            p1, p2 = np.random.randint(0, len(weights)), np.random.randint(0, len(weights))
             if p1 != p2: break
+        v = np.random.uniform(0, listWeights[p2])
 
-        v = np.random.uniform(0, current_state[p2])
-
-        neighbor[p1] = min(1, current_state[p1] + v)
-        neighbor[p2] = max(0, current_state[p2] - v)
-        return neighbor
-
-    @staticmethod
-    def EnsembleMSEFunc(func, weights, labels, models_predictions):
-        weight_sum = []
-
-        for prediction, weight in zip(models_predictions, weights):
-            weight_sum.append(prediction * weight)
-
-        weight_avg = np.sum(weight_sum, axis=0) / sum(weights)
-
-        return func(labels, weight_avg)
-
-    def cooling_linear_m(self, step):
-        try:
-            return self.t_max / (1+self.alpha * step)
-        except:
-            raise ValueError("[!] - Make sure that you set a value to alpha")
-
-    #ARRUMAR O COLLING
-
-    def cooling_linear_a(self, step):
-        return self.t_min + (self.t_max - self.t_min) * ((self.step_max - step)/self.step_max)
-
-    def cooling_quadratic_m(self, step):
-        try:
-            return self.t_min / (1 + self.alpha * step**2)
-        except:
-            raise ValueError("[!] - Make sure that you set a value to alpha")
-
-    def cooling_quadratic_a(self, step):
-        return self.t_min + (self.t_max - self.t_min) * ((self.t_max - step) / self.step_max)**2
-
-    def cooling_exponential_m(self, step):
-        try:
-            return self.t_max * self.alpha**step
-        except:
-            raise ValueError("[!] - Make sure that you set a value to alpha")
-
-    def cooling_logarithmic_m(self, step):
-        try:
-            return self.t_max / (self.alpha * math.log(step + 1))
-        except:
-            raise ValueError("[!] - Make sure that you set a value to alpha")
-
-
-    def results(self):
-        print('+------------------------ RESULTS -------------------------+\n')
-        print(f'guide function: {self.guide_func}')
-        print(f'  initial temp: {self.t_max}')
-        print(f'    final temp: {self.t:0.6f}')
-        print(f'     max steps: {self.step_max}')
-        print(f'    final step: {self.step}\n')
-
-        print(f'  final energy: {self.best_energy:0.6f}\n')
-        print(f'  best weights: {self.best_state}\n')
-        print(f'   weights sum: {sum(self.best_state):0.6f}\n')
-        print('+-------------------------- END ---------------------------+')
+        listWeights[p1] = min(1, listWeights[p1] + v)
+        listWeights[p2] = max(0, listWeights[p2] - v)
+        weights = dict(zip(weights.keys(), listWeights))
+        return weights

@@ -90,6 +90,7 @@ class PecanWrapper:
         mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}')
         mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}')
         mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}')
+        mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/opt') #for SA opt
         mkdir_if_not_exists(f'etc/log/{self.args.dataset}/{self.task}/{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}')
         self.local_logger_dir = f'etc/log/{self.args.dataset}/{self.task}//{self.args.participant_id}/{self.args.resolution}/{self.args.data_type}/{self.args.model}'
 

@@ -14,10 +14,9 @@ def main():
     #Project Parameterss
 
     parser.add_argument('--model', type=str,  default='SARIMAX',
-
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR, SARIMAX]')
 
-    parser.add_argument('--debug', type=bool, default=True)
+    parser.add_argument('--debug', type=bool, default=False)
     parser.add_argument('--debug_percent', type=float, default=0.2378)
     parser.add_argument('--task', type=str, default='traditional_models', help='Task of experiment, options: [train, test, traditional_models]')
     parser.add_argument('--sequence_length', type=int, default=60, help='Sequence length to the sequence training.')
@@ -26,10 +25,10 @@ def main():
 
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
-    parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
-    parser.add_argument('--resolution', type=str, default='1min', help='[1min, 1hour]')
-    parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
-    parser.add_argument('--data_type', type=str, default='all', help='[all, PCA, SHAP]]')
+    parser.add_argument('--dataset', type=str, default='HUE', help='[Pecanstreet, HUE]')
+    parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
+    parser.add_argument('--participant_id', type=str, default='1', help='Pecan Street participant id')
+    parser.add_argument('--data_type', type=str, default='PCA', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
     parser.add_argument('--bidirectional', type=bool, default=False,
@@ -98,8 +97,8 @@ def main():
         evaluator.evaluate()
         print(f"[!] - {args.model} evaluation completed")
     elif args.task == 'traditional_models':
-        TraditionalML(args=args).SVRTest()
-        TraditionalML(args=args).XGBoostTest()
+        # TraditionalML(args=args).SVRTest()
+        # TraditionalML(args=args).XGBoostTest()
         TraditionalML(args=args).statisticalModel()
 
         print(f"[!] - Evaluation of traditional models completed")

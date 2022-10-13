@@ -64,7 +64,7 @@ class TraditionalML(PecanWrapper):
                         data=data, 
                         title="Descaled consumption predictions", 
                         path=self.local_imgs_dir, 
-                        filename='last_72_h-predictions')
+                        filename='last_72_h-predictions', resolution=self.args.resolution)
 
         print('[!] - Metrics generated successfully')
             
