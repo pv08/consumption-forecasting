@@ -90,6 +90,7 @@ def saveSHAPForce(explainer, shap_values, features_names, path, filename, save_p
     if save_plots:
         for typs in save_types:
             plt.savefig(f'{path}/{filename}.{typs}', dpi=600, bbox_inches='tight')
+    plt.show()
     return f"[*] - SHAP force plot created on {path}/{filename}"
 
 def saveSHAPSummaryPlot(shap_values, features, features_names, title, path, filename, save_plots:bool=True, save_types:list = ['pdf']):
@@ -103,6 +104,7 @@ def saveSHAPSummaryPlot(shap_values, features, features_names, title, path, file
     if save_plots:
         for typs in save_types:
             plt.savefig(f'{path}/{filename}.{typs}', dpi=600, bbox_inches='tight')
+    plt.show()
 
     return f"[*] - SHAP summary plot created on {path}/{filename}"
 

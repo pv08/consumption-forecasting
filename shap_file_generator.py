@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
 
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='FCN',
+    parser.add_argument('--model', type=str,  default='LSTM',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
 
     parser.add_argument('--debug', type=bool, default=False)
@@ -32,7 +32,7 @@ def main():
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
     parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
-    parser.add_argument('--resolution', type=str, default='1min', help='[1min, 1hour]')
+    parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
     parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
     parser.add_argument('--data_type', type=str, default='all', help='[all, PCA, SHAP]]')
 
@@ -128,10 +128,10 @@ def main():
     shap_values = explainer.shap_values(shap_test)
     local_path = f"{evaluator.local_imgs_dir}/{args.model}/SHAP"
     mkdir_if_not_exists(local_path)
-    # saveSHAPForce(explainer=explainer, shap_values=shap_values, 
-    #                 features_names=evaluator.dataset.original_data.columns.to_list(),
-    #                 path=local_path,
-    #                 filename=f"{args.model}_feature_impact")
+    saveSHAPForce(explainer=explainer, shap_values=shap_values, 
+                    features_names=evaluator.dataset.original_data.columns.to_list(),
+                    path=local_path,
+                    filename=f"{args.model}_feature_impact")
     df = pd.DataFrame({
     "mean_abs_shap": np.mean(np.abs(shap_values[-1, :, :]), axis=0), 
     "stdev_abs_shap": np.std(np.abs(shap_values[-1, :, :]), axis=0), 
@@ -148,9 +148,9 @@ def main():
     }
     orginal_shap_important.to_csv(f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}', index=False)
     print("[!] - SHAP important features saved on", f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
-    # saveSHAPSummaryPlot(shap_values=shap_values, features=test_sequences[0, :,:], 
-    #                     features_names=evaluator.dataset.original_data.columns.to_list(),
-    #                     title=f"[`{args.model}`] - Feature Importance", path=local_path, filename=f"{args.model}_summary_plot")
+    saveSHAPSummaryPlot(shap_values=shap_values, features=test_sequences[0, :,:], 
+                        features_names=evaluator.dataset.original_data.columns.to_list(),
+                        title=f"[`{args.model}`] - Feature Importance", path=local_path, filename=f"{args.model}_summary_plot")
     
 
 
