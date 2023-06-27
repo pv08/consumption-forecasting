@@ -98,9 +98,12 @@ def saveSHAPSummaryPlot(shap_values, features, features_names, title, path, file
     shap.summary_plot(shap_values[0, :, :], features=features, 
                   feature_names=features_names, 
                   plot_type='bar', show=False)
-    plt.ylabel("Feature name")
-    plt.xlabel("Average Impact")
-    plt.title(title)
+    plt.ylabel("Atributo", fontdict={'size': 18})
+    plt.xlabel("Impacto médio", fontdict={'size': 18})
+    plt.xticks(fontsize=18)
+    plt.xticks(rotation=45)
+    plt.yticks(fontsize=18)
+    plt.title(title, fontdict={'size': 18})
     if save_plots:
         for typs in save_types:
             plt.savefig(f'{path}/{filename}.{typs}', dpi=600, bbox_inches='tight')

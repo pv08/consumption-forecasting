@@ -45,7 +45,6 @@ class TraditionalML(PecanWrapper):
                             path=self.local_result_dir, 
                             filename=f'validation_metrics_report' if task == 'val' else 'metrics_report', 
                             model=model_name)
-
         model_preds = []
         for preds, labels in zip(list(y_), y.to_list()):
             model_preds.append(dict(

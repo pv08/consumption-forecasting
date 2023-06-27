@@ -17,9 +17,9 @@ from collections import OrderedDict
 
 def main():
     parser = argparse.ArgumentParser(description='[Pecan Street Dataport] Forecasting the energy consumption of Pecan Street')
-
+    # RNN, LSTM, GRU, TST, ConvRNN, MLP, FCN, ResNet, TCN
     #Project Parameterss
-    parser.add_argument('--model', type=str,  default='LSTM',
+    parser.add_argument('--model', type=str,  default='TCN',
                             help='Model of experiment, options: [LSTM, Linear, GRU, RNN, ConvRNN, FCN, TCN, ResNet, Transformer, MLP, TST, XGBoost, SVR]')
 
     parser.add_argument('--debug', type=bool, default=False)
@@ -31,9 +31,9 @@ def main():
 
     #dataset parameters
     parser.add_argument('--root_path', type=str, default='data/', help='root path of the data file')
-    parser.add_argument('--dataset', type=str, default='Pecanstreet', help='[Pecanstreet, HUE]')
+    parser.add_argument('--dataset', type=str, default='HUE', help='[Pecanstreet, HUE]')
     parser.add_argument('--resolution', type=str, default='1hour', help='[1min, 1hour]')
-    parser.add_argument('--participant_id', type=str, default='661', help='Pecan Street participant id')
+    parser.add_argument('--participant_id', type=str, default='1', help='Pecan Street participant id')
     parser.add_argument('--data_type', type=str, default='all', help='[all, PCA, SHAP]]')
 
     #Recorrent neural networks hyperparameters
@@ -73,7 +73,7 @@ def main():
                         help='Transformer number of heads.')
     parser.add_argument('--d_ffn', type=int, default=256,
                         help='Transformer number of heads.')
-    parser.add_argument('--max_seq_len', type=int, default=60,
+    parser.add_argument('--max_seq_len', type=int, default=120,
                         help='Transformer number of heads.')
     parser.add_argument('--d_k', type=any, default=60,
                         help='Transformer number of heads.')
@@ -93,7 +93,7 @@ def main():
 
     args.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
     args.gpu = T.cuda.device_count()
-
+    np.random.seed(args.seed)
     evaluator = PecanEvaluator(args)
 
     shap_train_loader = DataLoader(
@@ -128,29 +128,31 @@ def main():
     shap_values = explainer.shap_values(shap_test)
     local_path = f"{evaluator.local_imgs_dir}/{args.model}/SHAP"
     mkdir_if_not_exists(local_path)
-    saveSHAPForce(explainer=explainer, shap_values=shap_values, 
-                    features_names=evaluator.dataset.original_data.columns.to_list(),
-                    path=local_path,
-                    filename=f"{args.model}_feature_impact")
-    df = pd.DataFrame({
-    "mean_abs_shap": np.mean(np.abs(shap_values[-1, :, :]), axis=0), 
-    "stdev_abs_shap": np.std(np.abs(shap_values[-1, :, :]), axis=0), 
-    "name": evaluator.dataset.original_data.columns.to_list()
-    })
-    important_values = df.sort_values("mean_abs_shap", ascending=False)[:11]
-    important_columns = important_values.name.to_list()
-    if 'consumption' not in important_columns:
-        important_columns.append('consumption')
-    orginal_shap_important = evaluator.dataset.original_data[important_columns]
-    save_file = {
-        'Pecanstreet': f'{args.participant_id}_shap_features_{args.model}.csv',
-        'HUE': f'residential_{args.participant_id}_{args.model}.csv'
-    }
-    orginal_shap_important.to_csv(f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}', index=False)
-    print("[!] - SHAP important features saved on", f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
+    # saveSHAPForce(explainer=explainer, shap_values=shap_values, 
+    #                 features_names=evaluator.dataset.original_data.columns.to_list(),
+    #                 path=local_path,
+    #                 filename=f"{args.model}_feature_impact")
+    # df = pd.DataFrame({
+    # "mean_abs_shap": np.mean(np.abs(shap_values[-1, :, :]), axis=0), 
+    # "stdev_abs_shap": np.std(np.abs(shap_values[-1, :, :]), axis=0), 
+    # "name": evaluator.dataset.original_data.columns.to_list()
+    # })
+    # important_values = df.sort_values("mean_abs_shap", ascending=False)[:11]
+    # df.sort_values("mean_abs_shap", ascending=False).to_csv(f'{local_path}/importance.csv', index=False)
+    
+    # important_columns = important_values.name.to_list()
+    # if 'consumption' not in important_columns:
+    #     important_columns.append('consumption')
+    # orginal_shap_important = evaluator.dataset.original_data[important_columns]
+    # save_file = {
+    #     'Pecanstreet': f'{args.participant_id}_shap_features_{args.model}.csv',
+    #     'HUE': f'residential_{args.participant_id}_{args.model}.csv'
+    # }
+    # # orginal_shap_important.to_csv(f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}', index=False)
+    # print("[!] - SHAP important features saved on", f'{args.root_path}/{args.dataset}/participants_data/{args.resolution}/features/SHAP/{save_file[args.dataset]}')
     saveSHAPSummaryPlot(shap_values=shap_values, features=test_sequences[0, :,:], 
                         features_names=evaluator.dataset.original_data.columns.to_list(),
-                        title=f"[`{args.model}`] - Feature Importance", path=local_path, filename=f"{args.model}_summary_plot")
+                        title=f"[`{args.model}`] - Importância dos atributos", path=local_path, filename=f"{args.model}_summary_plot")
     
 
 

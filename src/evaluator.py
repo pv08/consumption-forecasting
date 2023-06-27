@@ -41,6 +41,7 @@ class PecanEvaluator(PecanWrapper):
         for preds in self.regressor.test_predictions:
             preds['model'] = self.args.model
         test_df = pd.DataFrame(self.regressor.test_predictions)
+        test_df.to_csv(f"{self.local_result_dir}/{self.args.model}/escaled_test_preds.csv")
         test_df.label = descale(descaler, test_df.label)
         test_df.model_output = descale(descaler, test_df.model_output)
         test_df.to_csv(f"{self.local_result_dir}/{self.args.model}/test_preds.csv")
